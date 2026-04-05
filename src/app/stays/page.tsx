@@ -151,22 +151,27 @@ export default function StaysPage() {
           {/* Price range */}
           <div className="mb-6">
             <label className="text-xs font-medium text-stone-700 mb-2 block">Price per night (AUD)</label>
-            <div className="flex gap-2 items-center">
-              <input
-                type="number"
-                placeholder="Min"
-                value={priceMin}
-                onChange={(e) => setPriceMin(e.target.value)}
-                className="flex-1 rounded-xl border border-black/10 bg-stone-50 px-3 py-2 text-sm text-stone-800 focus:outline-none focus:ring-1 focus:ring-stone-400"
-              />
-              <span className="text-stone-400 text-xs">–</span>
-              <input
-                type="number"
-                placeholder="Max"
-                value={priceMax}
-                onChange={(e) => setPriceMax(e.target.value)}
-                className="flex-1 rounded-xl border border-black/10 bg-stone-50 px-3 py-2 text-sm text-stone-800 focus:outline-none focus:ring-1 focus:ring-stone-400"
-              />
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <span className="text-xs text-stone-400 mb-1 block">Min</span>
+                <input
+                  type="number"
+                  placeholder="$0"
+                  value={priceMin}
+                  onChange={(e) => setPriceMin(e.target.value)}
+                  className="w-full rounded-xl border border-black/10 bg-stone-50 px-3 py-2 text-sm text-stone-800 focus:outline-none focus:ring-1 focus:ring-stone-400"
+                />
+              </div>
+              <div>
+                <span className="text-xs text-stone-400 mb-1 block">Max</span>
+                <input
+                  type="number"
+                  placeholder="Any"
+                  value={priceMax}
+                  onChange={(e) => setPriceMax(e.target.value)}
+                  className="w-full rounded-xl border border-black/10 bg-stone-50 px-3 py-2 text-sm text-stone-800 focus:outline-none focus:ring-1 focus:ring-stone-400"
+                />
+              </div>
             </div>
           </div>
 
