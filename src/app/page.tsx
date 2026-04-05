@@ -19,7 +19,8 @@ import { EditorialCard } from "@/components/cards/editorial-card";
 import { CtaSplitPanel } from "@/components/sections/cta-split-panel";
 import { SectionHeading } from "@/components/sections/section-heading";
 import { SearchModule } from "@/components/forms/search-module";
-import { conciergeServices, journalPosts, properties, testimonials } from "@/data/mock-data";
+import { conciergeServices, journalPosts, testimonials } from "@/data/mock-data";
+import type { Property } from "@/data/mock-data";
 
 const guestPromiseCards = [
   {
@@ -82,7 +83,22 @@ const hostServices = [
 
 const ownerSteps = ["Consult", "Onboard", "Launch", "Manage", "Report / optimise"];
 
-export default function Home() {
+async function getFeaturedStays(): Promise<Property[]> {
+  try {
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+    const res = await fetch(`${appUrl}/api/stays`, { next: { revalidate: 300 } });
+    if (!res.ok) return [];
+    const data = await res.json();
+    return ((data.stays as Property[]) ?? [])
+      .filter((s) => s.heroImage)
+      .slice(0, 6);
+  } catch {
+    return [];
+  }
+}
+
+export default async function Home() {
+  const featuredStays = await getFeaturedStays();
   return (
     <div>
       <section className="relative overflow-hidden">
@@ -140,7 +156,7 @@ export default function Home() {
           </Link>
         </div>
         <div className="mt-10 grid gap-6 lg:grid-cols-2 xl:grid-cols-4">
-          {properties.slice(0, 4).map((property) => (
+          {featuredStays.slice(0, 4).map((property) => (
             <PropertyCard key={property.slug} property={property} />
           ))}
         </div>

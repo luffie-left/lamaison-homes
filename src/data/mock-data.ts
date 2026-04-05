@@ -25,6 +25,8 @@ export type Property = {
   familyFriendly?: boolean;
   balcony?: boolean;
   pool?: boolean;
+  cleaningFee?: number;
+  listingId?: number;
 };
 
 export const properties: Property[] = [

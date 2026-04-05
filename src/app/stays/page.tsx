@@ -1,6 +1,6 @@
 import { PropertyCard } from "@/components/cards/property-card";
 import { SectionHeading } from "@/components/sections/section-heading";
-import { properties } from "@/data/mock-data";
+import type { Property } from "@/data/mock-data";
 
 const filters = [
   "Location",
@@ -19,13 +19,29 @@ const filters = [
 
 const sorts = ["Recommended", "Price low-high", "Price high-low", "Newest", "Best for families", "Best for business"];
 
-export default function StaysPage() {
+async function getStays(): Promise<Property[]> {
+  try {
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+    const res = await fetch(`${appUrl}/api/stays`, {
+      next: { revalidate: 300 },
+    });
+    if (!res.ok) return [];
+    const data = await res.json();
+    return (data.stays as Property[]) ?? [];
+  } catch {
+    return [];
+  }
+}
+
+export default async function StaysPage() {
+  const stays = await getStays();
+
   return (
     <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
       <SectionHeading
         eyebrow="The collection"
         title="Handpicked stays for considered travellers."
-        description="Editorial presentation, booking clarity, and a scalable listing framework prepared for future live rates and Hostaway sync."
+        description={`${stays.length > 0 ? `${stays.length} properties across Melbourne` : "Curated Melbourne stays with hotel-grade care."}`}
       />
       <div className="mt-10 grid gap-10 lg:grid-cols-[280px_1fr]">
         <aside className="h-fit rounded-[30px] border border-black/5 bg-white p-6 shadow-[0_20px_60px_rgba(15,23,42,0.04)]">
@@ -50,10 +66,18 @@ export default function StaysPage() {
             </div>
           </div>
         </aside>
-        <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-          {properties.map((property) => (
-            <PropertyCard key={property.slug} property={property} />
-          ))}
+        <div>
+          {stays.length === 0 ? (
+            <div className="rounded-[28px] bg-white p-8 text-center shadow-[0_20px_60px_rgba(15,23,42,0.04)]">
+              <p className="text-stone-500">No stays available at this time. Please check back soon.</p>
+            </div>
+          ) : (
+            <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+              {stays.map((property) => (
+                <PropertyCard key={property.slug} property={property} />
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>
