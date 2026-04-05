@@ -23,13 +23,14 @@ export default function StaysPage() {
   const [guests, setGuests] = useState("Any");
   const [priceMin, setPriceMin] = useState("");
   const [priceMax, setPriceMax] = useState("");
+  const [sortBy, setSortBy] = useState("recommended");
 
   // Load all stays once on mount (but don't show them)
   useEffect(() => {
     const load = async () => {
       try {
         const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "";
-        const res = await fetch(`${appUrl}/api/stays`, { next: { revalidate: 300 } } as RequestInit);
+        const res = await fetch(`${appUrl}/api/stays`, { cache: "no-store" });
         if (!res.ok) return;
         const data = await res.json();
         setAllStays(data.stays ?? []);
@@ -42,24 +43,42 @@ export default function StaysPage() {
     setLoading(true);
     setSearched(true);
 
-    const filtered = allStays.filter((s) => {
-      if (location !== "All Melbourne" && !s.suburb?.toLowerCase().includes(location.toLowerCase()) && !s.city?.toLowerCase().includes(location.toLowerCase())) return false;
+    let filtered = allStays.filter((s) => {
+      // Location: match suburb or city (case-insensitive)
+      if (location !== "All Melbourne") {
+        const loc = location.toLowerCase();
+        const suburbMatch = s.suburb?.toLowerCase().includes(loc);
+        const cityMatch = s.city?.toLowerCase().includes(loc);
+        if (!suburbMatch && !cityMatch) return false;
+      }
+      // Bedrooms: exact match, except "4+" means 4 or more
       if (bedrooms !== "Any") {
-        const minBeds = bedrooms === "4+" ? 4 : parseInt(bedrooms);
-        if (bedrooms === "4+" ? s.bedrooms < 4 : s.bedrooms !== minBeds) return false;
+        if (bedrooms === "4+") {
+          if (s.bedrooms < 4) return false;
+        } else {
+          if (s.bedrooms !== parseInt(bedrooms)) return false;
+        }
       }
+      // Guests: property must sleep AT LEAST this many
       if (guests !== "Any") {
-        const minGuests = guests === "6+" ? 6 : parseInt(guests);
-        if (guests === "6+" ? s.sleeps < 6 : s.sleeps < minGuests) return false;
+        const minG = guests === "6+" ? 6 : parseInt(guests);
+        if (s.sleeps < minG) return false;
       }
+      // Price range
       if (priceMin && s.startingPrice < parseInt(priceMin)) return false;
       if (priceMax && s.startingPrice > parseInt(priceMax)) return false;
       return true;
     });
 
+    // Sort
+    if (sortBy === "price-asc") filtered = [...filtered].sort((a, b) => a.startingPrice - b.startingPrice);
+    else if (sortBy === "price-desc") filtered = [...filtered].sort((a, b) => b.startingPrice - a.startingPrice);
+    else if (sortBy === "beds-desc") filtered = [...filtered].sort((a, b) => b.bedrooms - a.bedrooms);
+    else if (sortBy === "guests-desc") filtered = [...filtered].sort((a, b) => b.sleeps - a.sleeps);
+
     setResults(filtered);
     setLoading(false);
-  }, [allStays, location, bedrooms, guests, priceMin, priceMax]);
+  }, [allStays, location, bedrooms, guests, priceMin, priceMax, sortBy]);
 
   const handleReset = () => {
     setLocation("All Melbourne");
@@ -67,6 +86,7 @@ export default function StaysPage() {
     setGuests("Any");
     setPriceMin("");
     setPriceMax("");
+    setSortBy("recommended");
     setSearched(false);
     setResults([]);
   };
@@ -148,6 +168,23 @@ export default function StaysPage() {
                 className="flex-1 rounded-xl border border-black/10 bg-stone-50 px-3 py-2 text-sm text-stone-800 focus:outline-none focus:ring-1 focus:ring-stone-400"
               />
             </div>
+          </div>
+
+
+          {/* Sort */}
+          <div className="mb-6">
+            <label className="text-xs font-medium text-stone-700 mb-2 block">Sort by</label>
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+              className="w-full rounded-xl border border-black/10 bg-stone-50 px-3 py-2.5 text-sm text-stone-800 focus:outline-none focus:ring-1 focus:ring-stone-400"
+            >
+              <option value="recommended">Recommended</option>
+              <option value="price-asc">Price: low to high</option>
+              <option value="price-desc">Price: high to low</option>
+              <option value="beds-desc">Most bedrooms</option>
+              <option value="guests-desc">Most guests</option>
+            </select>
           </div>
 
           {/* Actions */}
