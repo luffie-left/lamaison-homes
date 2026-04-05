@@ -20,7 +20,7 @@ export type Property = {
   houseRules: string[];
   localHighlights: string[];
   status: "draft" | "live";
-  luxuryTier: "Signature" | "Reserve" | "Collection";
+  luxuryTier?: "Signature" | "Reserve" | "Collection";
   workFriendly?: boolean;
   familyFriendly?: boolean;
   balcony?: boolean;

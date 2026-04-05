@@ -45,6 +45,7 @@ interface SupabaseProperty {
   photos: Array<{ url: string; sortOrder?: number }>;
   is_published: boolean;
   is_active: boolean;
+  tier: string | null;
 }
 
 function mapSupabaseToProperty(p: SupabaseProperty): Property {
@@ -77,12 +78,7 @@ function mapSupabaseToProperty(p: SupabaseProperty): Property {
       : ["No parties", "No smoking", "Respect quiet hours after 10pm"],
     localHighlights: [],
     status: "live",
-    luxuryTier:
-      (p.bedrooms ?? 1) >= 3
-        ? "Reserve"
-        : (p.bedrooms ?? 1) >= 2
-        ? "Signature"
-        : "Collection",
+    luxuryTier: (p.tier as "Signature" | "Reserve" | "Collection" | undefined) ?? undefined,
     workFriendly: (p.amenities ?? []).some((a) =>
       /wifi|workspace|desk/i.test(a)
     ),

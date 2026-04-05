@@ -14,9 +14,11 @@ export function PropertyCard({ property, className }: { property: Property; clas
           fill
           className="object-cover transition duration-700 group-hover:scale-105"
         />
-        <div className="absolute left-4 top-4 rounded-full bg-[#f7f2eb]/90 px-3 py-1 text-xs uppercase tracking-[0.2em] text-stone-700">
-          {property.luxuryTier}
-        </div>
+        {property.luxuryTier && (
+          <div className="absolute left-4 top-4 rounded-full bg-[#f7f2eb]/90 px-3 py-1 text-xs uppercase tracking-[0.2em] text-stone-700">
+            {property.luxuryTier}
+          </div>
+        )}
       </div>
       <div className="space-y-4 p-5">
         <div className="space-y-2">
