@@ -46,6 +46,7 @@ interface SupabaseProperty {
   is_published: boolean;
   is_active: boolean;
   tier: string | null;
+  display_name: string | null;
 }
 
 function mapSupabaseToProperty(p: SupabaseProperty): Property {
@@ -55,7 +56,7 @@ function mapSupabaseToProperty(p: SupabaseProperty): Property {
 
   return {
     slug: p.slug,
-    title: p.name,
+    title: p.display_name ?? p.name,
     shortTagline: p.description?.split(".")[0]?.trim() ?? p.name,
     suburb: p.suburb ?? p.city ?? "Melbourne",
     city: p.city ?? "Melbourne",
