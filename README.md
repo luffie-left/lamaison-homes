@@ -24,6 +24,26 @@ npm run build
 npm run start
 ```
 
+## Evaluation and audit
+```bash
+# full route/build baseline evaluation
+npm run evaluate
+
+# Hostaway consistency audit
+npm run audit:hostaway
+```
+
+`npm run evaluate` will:
+- run a production build
+- start the local app
+- check key routes and baseline content signals
+- verify homepage guest/owner funnel cues and key CTA content
+
+`npm run audit:hostaway` will:
+- inspect docs/code for Hostaway wrapper strategy signals
+- check booking/availability/rate references
+- flag missing future schema fields recommended for Hostaway alignment
+
 ## Environment variables
 Create `.env.local` with placeholders as needed:
 ```bash
