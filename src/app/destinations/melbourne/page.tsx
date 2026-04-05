@@ -5,9 +5,25 @@ import { EditorialCard } from "@/components/cards/editorial-card";
 import { PropertyCard } from "@/components/cards/property-card";
 import { SuburbCard } from "@/components/cards/suburb-card";
 import { SectionHeading } from "@/components/sections/section-heading";
-import { journalPosts, properties, suburbClusters, trustBadges } from "@/data/mock-data";
+import { journalPosts, suburbClusters, trustBadges } from "@/data/mock-data";
+import type { Property } from "@/data/mock-data";
 
-export default function MelbournePage() {
+async function getFeaturedStays(): Promise<Property[]> {
+  try {
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+    const res = await fetch(`${appUrl}/api/stays`, { next: { revalidate: 300 } });
+    if (!res.ok) return [];
+    const data = await res.json();
+    const stays: Property[] = data.stays ?? [];
+    // Return max 4, prefer those with photos
+    return stays.filter((s) => s.heroImage).slice(0, 4);
+  } catch {
+    return [];
+  }
+}
+
+export default async function MelbournePage() {
+  const featuredStays = await getFeaturedStays();
   return (
     <div>
       <section className="relative overflow-hidden">
@@ -38,7 +54,7 @@ export default function MelbournePage() {
       <section className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
         <SectionHeading eyebrow="Featured stays by suburb" title="Stay in Melbourne with booking confidence." />
         <div className="mt-8 grid gap-6 md:grid-cols-2 xl:grid-cols-4">
-          {properties.slice(0, 4).map((property) => (
+          {featuredStays.map((property) => (
             <PropertyCard key={property.slug} property={property} />
           ))}
         </div>
