@@ -29,11 +29,9 @@ import {
 
 import { PropertyCard } from "@/components/cards/property-card";
 import { SectionHeading } from "@/components/sections/section-heading";
-import { BookingWidget } from "@/components/forms/booking-widget";
 import { DescriptionExpand } from "@/components/property/description-expand";
 import { MapWrapper } from "@/components/property/map-wrapper";
 import { PropertyBookingSection } from "@/components/property/property-booking-section";
-import { DesktopWidgetWrapper } from "@/components/property/desktop-widget-wrapper";
 import type { Property } from "@/data/mock-data";
 
 export const dynamic = "force-dynamic";
@@ -343,14 +341,7 @@ export default async function PropertyPage({
             </div>
             <hr className="border-stone-200" />
 
-            {/* Section 7 — Availability calendar + mobile widget (client, owns date state) */}
-            <PropertyBookingSection
-              slug={slug}
-              listingId={property.listingId ?? 0}
-              nightlyRate={property.startingPrice}
-              cleaningFee={property.cleaningFee ?? 0}
-            />
-            <hr className="border-stone-200" />
+
 
             {/* Section 8 — House rules */}
             <div className="py-8">
@@ -416,10 +407,11 @@ export default async function PropertyPage({
             </div>
           </div>
 
-          {/* RIGHT COLUMN — Sticky booking widget (desktop) */}
-          <aside className="hidden lg:block">
-            <div className="rounded-2xl border border-stone-200 bg-white p-6 shadow-xl lg:sticky lg:top-28">
-              <DesktopWidgetWrapper
+          {/* RIGHT COLUMN — Booking widget with inline calendar */}
+          <aside className="lg:block">
+            <div className="lg:sticky lg:top-28">
+              <PropertyBookingSection
+                slug={slug}
                 listingId={property.listingId ?? 0}
                 nightlyRate={property.startingPrice}
                 cleaningFee={property.cleaningFee ?? 0}

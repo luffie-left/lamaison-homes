@@ -1,121 +1,304 @@
 "use client";
 
-import { useState } from "react";
-import dynamic from "next/dynamic";
-import { BookingWidget } from "@/components/forms/booking-widget";
+import { useState, useEffect, useCallback } from "react";
+import {
+  format,
+  startOfMonth,
+  endOfMonth,
+  eachDayOfInterval,
+  getDay,
+  addMonths,
+  isBefore,
+  isAfter,
+  isSameDay,
+  isWithinInterval,
+  startOfDay,
+} from "date-fns";
 
-const AvailabilityCalendarInner = dynamic(
-  () => import("./availability-calendar").then((m) => m.AvailabilityCalendar),
-  {
-    ssr: false,
-    loading: () => <div className="py-8 text-sm text-stone-400">Loading calendar…</div>,
-  }
-);
+// ── Inline calendar (no separate file needed) ─────────────────────────────────
 
-interface PropertyBookingSectionProps {
-  slug: string;
-  listingId: number;
-  nightlyRate: number;
-  cleaningFee: number;
+function CalendarMonth({
+  monthDate,
+  blockedDates,
+  selectedStart,
+  selectedEnd,
+  hovered,
+  onDayClick,
+  onDayHover,
+}: {
+  monthDate: Date;
+  blockedDates: Set<string>;
+  selectedStart: Date | null;
+  selectedEnd: Date | null;
+  hovered: Date | null;
+  onDayClick: (d: Date) => void;
+  onDayHover: (d: Date | null) => void;
+}) {
+  const today = startOfDay(new Date());
+  const start = startOfMonth(monthDate);
+  const end = endOfMonth(monthDate);
+  const days = eachDayOfInterval({ start, end });
+  const startDow = getDay(start);
+  const rangeEnd = selectedStart && !selectedEnd && hovered ? hovered : selectedEnd;
+
+  return (
+    <div>
+      <p className="mb-3 text-center text-sm font-medium text-stone-900">
+        {format(monthDate, "MMMM yyyy")}
+      </p>
+      <div className="grid grid-cols-7 gap-y-1 text-center">
+        {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map((d) => (
+          <div key={d} className="pb-2 text-xs font-medium text-stone-400">{d}</div>
+        ))}
+        {Array.from({ length: startDow }).map((_, i) => <div key={`sp-${i}`} />)}
+        {days.map((day) => {
+          const iso = format(day, "yyyy-MM-dd");
+          const isBlocked = blockedDates.has(iso);
+          const isPast = isBefore(day, today);
+          const isDisabled = isBlocked || isPast;
+          const isStart = selectedStart ? isSameDay(day, selectedStart) : false;
+          const isEnd = rangeEnd ? isSameDay(day, rangeEnd) : false;
+          const isInRange =
+            selectedStart && rangeEnd
+              ? isWithinInterval(day, {
+                  start: isAfter(selectedStart, rangeEnd) ? rangeEnd : selectedStart,
+                  end: isAfter(selectedStart, rangeEnd) ? selectedStart : rangeEnd,
+                })
+              : false;
+
+          let cls = "relative flex items-center justify-center w-8 h-8 mx-auto rounded-full text-sm transition-colors ";
+          if (isBlocked) cls += "bg-stone-100 text-stone-300 cursor-not-allowed line-through ";
+          else if (isPast) cls += "text-stone-300 cursor-not-allowed ";
+          else if (isStart || isEnd) cls += "bg-stone-950 text-white font-medium cursor-pointer ";
+          else if (isInRange) cls += "bg-stone-200 text-stone-800 cursor-pointer rounded-none ";
+          else cls += "text-stone-700 hover:bg-stone-100 cursor-pointer ";
+
+          return (
+            <div
+              key={iso}
+              className={cls}
+              onClick={() => !isDisabled && onDayClick(day)}
+              onMouseEnter={() => !isDisabled && onDayHover(day)}
+              onMouseLeave={() => onDayHover(null)}
+              title={isBlocked ? "Not available" : undefined}
+            >
+              {format(day, "d")}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
 }
 
-/**
- * Client component that owns check-in/check-out state.
- * Connects the availability calendar to the booking widget so
- * selected dates flow directly into the reserve form.
- */
+// ── Booking widget ────────────────────────────────────────────────────────────
+
+type Step = "dates" | "enquiry" | "confirmed";
+
+function fmt(n: number) {
+  return new Intl.NumberFormat("en-AU", { style: "currency", currency: "AUD", minimumFractionDigits: 0 }).format(n);
+}
+
+function nightsBetween(a: string, b: string) {
+  if (!a || !b) return 0;
+  return Math.max(0, Math.round((new Date(b).getTime() - new Date(a).getTime()) / 86400000));
+}
+
+// ── Main component ────────────────────────────────────────────────────────────
+
 export function PropertyBookingSection({
   slug,
   listingId,
   nightlyRate,
   cleaningFee,
-}: PropertyBookingSectionProps) {
-  const [checkIn, setCheckIn] = useState<string | null>(null);
-  const [checkOut, setCheckOut] = useState<string | null>(null);
-
-  function handleDatesChange(ci: string | null, co: string | null) {
-    setCheckIn(ci);
-    setCheckOut(co);
-  }
-
-  return (
-    <>
-      {/* Availability — hidden, date state managed here for widget pre-fill */}
-      <div className="hidden">
-        <AvailabilityCalendarInner slug={slug} onDatesChange={handleDatesChange} />
-      </div>
-
-        {/* Reserve button that appears once both dates are selected */}
-        {checkIn && checkOut && (
-          <div className="mt-6 rounded-2xl border border-[#c9a96e] bg-[#f7f2eb] p-5">
-            <div className="mb-4 flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-stone-900">Ready to reserve?</p>
-                <p className="text-xs text-stone-500 mt-0.5">{checkIn} → {checkOut}</p>
-              </div>
-              <button
-                onClick={() => {
-                  // Scroll to booking widget and pre-fill dates
-                  const widget = document.getElementById("booking-widget");
-                  if (widget) {
-                    widget.scrollIntoView({ behavior: "smooth", block: "center" });
-                    // Dispatch custom event for widget to pick up
-                    widget.dispatchEvent(
-                      new CustomEvent("set-dates", {
-                        detail: { checkIn, checkOut },
-                        bubbles: true,
-                      })
-                    );
-                  }
-                }}
-                className="rounded-full bg-stone-950 px-5 py-2.5 text-sm font-medium text-stone-50 hover:bg-stone-800 transition-colors"
-              >
-                Reserve →
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Mobile booking widget with pre-filled dates */}
-      <div id="booking-widget" className="py-8 lg:hidden">
-        <div className="rounded-2xl border border-stone-200 bg-white p-6 shadow-xl">
-          <BookingWidget
-            listingId={listingId}
-            nightlyRate={nightlyRate}
-            cleaningFee={cleaningFee}
-            checkInDate={checkIn ?? undefined}
-            checkOutDate={checkOut ?? undefined}
-          />
-        </div>
-      </div>
-    </>
-  );
-}
-
-/**
- * Desktop sticky widget — also receives dates from calendar via props.
- */
-export function DesktopBookingWidget({
-  listingId,
-  nightlyRate,
-  cleaningFee,
-  checkIn,
-  checkOut,
 }: {
+  slug: string;
   listingId: number;
   nightlyRate: number;
   cleaningFee: number;
-  checkIn?: string | null;
-  checkOut?: string | null;
 }) {
+  const [blockedDates, setBlockedDates] = useState<Set<string>>(new Set());
+  const [calLoading, setCalLoading] = useState(true);
+  const [selectedStart, setSelectedStart] = useState<Date | null>(null);
+  const [selectedEnd, setSelectedEnd] = useState<Date | null>(null);
+  const [hovered, setHovered] = useState<Date | null>(null);
+  const month0 = startOfMonth(new Date());
+  const month1 = addMonths(month0, 1);
+
+  // Form state
+  const [step, setStep] = useState<Step>("dates");
+  const [guests, setGuests] = useState(2);
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [message, setMessage] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const checkIn = selectedStart ? format(selectedStart, "yyyy-MM-dd") : null;
+  const checkOut = selectedEnd ? format(selectedEnd, "yyyy-MM-dd") : null;
+  const nights = checkIn && checkOut ? nightsBetween(checkIn, checkOut) : 0;
+  const total = nights * nightlyRate + (nights > 0 ? cleaningFee : 0);
+
+  const fetchAvailability = useCallback(async () => {
+    try {
+      setCalLoading(true);
+      const res = await fetch(`/api/stays/${slug}/availability`);
+      if (!res.ok) return;
+      const data = await res.json();
+      setBlockedDates(new Set(data.blockedDates ?? []));
+    } catch { /* ignore */ }
+    finally { setCalLoading(false); }
+  }, [slug]);
+
+  useEffect(() => { fetchAvailability(); }, [fetchAvailability]);
+
+  // Broadcast dates for desktop widget
+  useEffect(() => {
+    document.dispatchEvent(new CustomEvent("set-dates", { detail: { checkIn, checkOut }, bubbles: true }));
+  }, [checkIn, checkOut]);
+
+  function handleDayClick(day: Date) {
+    if (!selectedStart || (selectedStart && selectedEnd)) {
+      setSelectedStart(day);
+      setSelectedEnd(null);
+      setStep("dates");
+    } else {
+      if (isBefore(day, selectedStart)) {
+        setSelectedEnd(selectedStart);
+        setSelectedStart(day);
+      } else {
+        setSelectedEnd(day);
+      }
+    }
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setSubmitting(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/enquiry", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, email, phone, listingId, checkIn, checkOut, guests, message }),
+      });
+      if (!res.ok) throw new Error("Failed");
+      setStep("confirmed");
+    } catch {
+      setError("Something went wrong. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
   return (
-    <BookingWidget
-      listingId={listingId}
-      nightlyRate={nightlyRate}
-      cleaningFee={cleaningFee}
-      checkInDate={checkIn ?? undefined}
-      checkOutDate={checkOut ?? undefined}
-    />
+    <div className="rounded-2xl border border-stone-200 bg-white p-6 shadow-xl">
+      {step === "confirmed" ? (
+        <div className="text-center py-6">
+          <div className="text-3xl mb-3">✓</div>
+          <p className="text-lg font-medium text-stone-900 mb-1">Enquiry received</p>
+          <p className="text-sm text-stone-500">We&apos;ll confirm your booking within 2 hours.</p>
+        </div>
+      ) : (
+        <>
+          {/* Price header */}
+          <div className="mb-5">
+            <span className="text-2xl font-semibold text-stone-950">{fmt(nightlyRate)}</span>
+            <span className="text-stone-500 text-sm"> / night</span>
+          </div>
+
+          {/* Calendar — with blocked dates */}
+          <div className="mb-5">
+            <p className="text-xs font-medium text-stone-500 uppercase tracking-wide mb-3">
+              {checkIn && checkOut
+                ? `${checkIn} → ${checkOut} · ${nights} night${nights !== 1 ? "s" : ""}`
+                : checkIn
+                ? "Select check-out date"
+                : "Select dates"}
+            </p>
+            {calLoading ? (
+              <p className="text-xs text-stone-400 py-4 text-center">Loading availability…</p>
+            ) : (
+              <div className="grid gap-6 sm:grid-cols-2">
+                <CalendarMonth monthDate={month0} blockedDates={blockedDates} selectedStart={selectedStart} selectedEnd={selectedEnd} hovered={hovered} onDayClick={handleDayClick} onDayHover={setHovered} />
+                <CalendarMonth monthDate={month1} blockedDates={blockedDates} selectedStart={selectedStart} selectedEnd={selectedEnd} hovered={hovered} onDayClick={handleDayClick} onDayHover={setHovered} />
+              </div>
+            )}
+            {(checkIn || checkOut) && (
+              <button onClick={() => { setSelectedStart(null); setSelectedEnd(null); }} className="mt-2 text-xs text-stone-400 underline hover:text-stone-700">
+                Clear dates
+              </button>
+            )}
+          </div>
+
+          {/* Guests */}
+          <div className="mb-5">
+            <label className="text-xs font-medium text-stone-500 uppercase tracking-wide block mb-2">Guests</label>
+            <select
+              value={guests}
+              onChange={e => setGuests(Number(e.target.value))}
+              className="w-full rounded-xl border border-stone-200 px-3 py-2 text-sm text-stone-800 focus:outline-none focus:ring-1 focus:ring-stone-400"
+            >
+              {[1,2,3,4,5,6,7,8].map(n => <option key={n} value={n}>{n} guest{n !== 1 ? "s" : ""}</option>)}
+            </select>
+          </div>
+
+          {/* Price breakdown */}
+          {nights > 0 && (
+            <div className="mb-5 space-y-2 text-sm border-t border-stone-100 pt-4">
+              <div className="flex justify-between text-stone-600">
+                <span>{fmt(nightlyRate)} × {nights} night{nights !== 1 ? "s" : ""}</span>
+                <span>{fmt(nightlyRate * nights)}</span>
+              </div>
+              <div className="flex justify-between text-stone-600">
+                <span>Cleaning fee</span>
+                <span>{fmt(cleaningFee)}</span>
+              </div>
+              <div className="flex justify-between font-semibold text-stone-900 border-t border-stone-100 pt-2">
+                <span>Total</span>
+                <span>{fmt(total)}</span>
+              </div>
+            </div>
+          )}
+
+          {/* Reserve button or enquiry form */}
+          {step === "dates" && (
+            <>
+              <button
+                onClick={() => { if (checkIn && checkOut) setStep("enquiry"); }}
+                disabled={!checkIn || !checkOut}
+                className="w-full rounded-full bg-stone-950 py-3 text-sm font-medium text-stone-50 hover:bg-stone-800 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                {checkIn && checkOut ? "Reserve" : "Select dates to reserve"}
+              </button>
+              <p className="mt-2 text-center text-xs text-stone-400">You won&apos;t be charged yet</p>
+            </>
+          )}
+
+          {step === "enquiry" && (
+            <form onSubmit={handleSubmit} className="space-y-3">
+              <p className="text-sm font-medium text-stone-800 mb-3">Your details</p>
+              <input required placeholder="Full name" value={name} onChange={e => setName(e.target.value)}
+                className="w-full rounded-xl border border-stone-200 px-3 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-stone-400" />
+              <input required type="email" placeholder="Email address" value={email} onChange={e => setEmail(e.target.value)}
+                className="w-full rounded-xl border border-stone-200 px-3 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-stone-400" />
+              <input placeholder="Phone (optional)" value={phone} onChange={e => setPhone(e.target.value)}
+                className="w-full rounded-xl border border-stone-200 px-3 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-stone-400" />
+              <textarea placeholder="Any questions or special requests?" value={message} onChange={e => setMessage(e.target.value)} rows={3}
+                className="w-full rounded-xl border border-stone-200 px-3 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-stone-400" />
+              {error && <p className="text-xs text-red-500">{error}</p>}
+              <button type="submit" disabled={submitting}
+                className="w-full rounded-full bg-stone-950 py-3 text-sm font-medium text-stone-50 hover:bg-stone-800 transition-colors disabled:opacity-50">
+                {submitting ? "Sending…" : "Submit enquiry"}
+              </button>
+              <button type="button" onClick={() => setStep("dates")} className="w-full text-xs text-stone-400 underline hover:text-stone-700">
+                ← Back to dates
+              </button>
+            </form>
+          )}
+        </>
+      )}
+    </div>
   );
 }
