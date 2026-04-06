@@ -30,9 +30,11 @@ export async function GET(
     const stay = mapToProperty(data.result);
     return NextResponse.json({ stay });
   } catch (err) {
-    console.error(`[/api/stays/${slug}] Error:`, err);
+    const msg = err instanceof Error ? err.message : String(err)
+    const stack = err instanceof Error ? err.stack : ''
+    console.error(`[/api/stays/${slug}] Error:`, msg, stack);
     return NextResponse.json(
-      { error: "Failed to fetch listing" },
+      { error: "Failed to fetch listing", detail: msg },
       { status: 500 }
     );
   }
