@@ -40,17 +40,10 @@ export function PropertyBookingSection({
 
   return (
     <>
-      {/* Calendar section */}
-      <div id="availability" className="py-8">
-        <h2 className="mb-2 text-xl font-medium text-stone-950">Availability</h2>
-        <p className="mb-4 text-sm text-stone-500">
-          {checkIn && checkOut
-            ? `${checkIn} → ${checkOut}`
-            : checkIn
-            ? `Check-in: ${checkIn} · Select check-out date`
-            : "Select your check-in and check-out dates"}
-        </p>
+      {/* Availability — hidden, date state managed here for widget pre-fill */}
+      <div className="hidden">
         <AvailabilityCalendarInner slug={slug} onDatesChange={handleDatesChange} />
+      </div>
 
         {/* Reserve button that appears once both dates are selected */}
         {checkIn && checkOut && (
