@@ -32,7 +32,8 @@ import { SectionHeading } from "@/components/sections/section-heading";
 import { BookingWidget } from "@/components/forms/booking-widget";
 import { DescriptionExpand } from "@/components/property/description-expand";
 import { MapWrapper } from "@/components/property/map-wrapper";
-import { CalendarWrapper } from "@/components/property/calendar-wrapper";
+import { PropertyBookingSection } from "@/components/property/property-booking-section";
+import { DesktopWidgetWrapper } from "@/components/property/desktop-widget-wrapper";
 import type { Property } from "@/data/mock-data";
 
 export const dynamic = "force-dynamic";
@@ -342,24 +343,14 @@ export default async function PropertyPage({
             </div>
             <hr className="border-stone-200" />
 
-            {/* Section 7 — Availability calendar */}
-            <div className="py-8">
-              <h2 className="mb-6 text-xl font-medium text-stone-950">Availability</h2>
-              <p className="mb-4 text-sm text-stone-500">Select check-in and check-out dates</p>
-              <CalendarWrapper slug={slug} />
-            </div>
+            {/* Section 7 — Availability calendar + mobile widget (client, owns date state) */}
+            <PropertyBookingSection
+              slug={slug}
+              listingId={property.listingId ?? 0}
+              nightlyRate={property.startingPrice}
+              cleaningFee={property.cleaningFee ?? 0}
+            />
             <hr className="border-stone-200" />
-
-            {/* Mobile booking widget — shown before map on mobile */}
-            <div className="py-8 lg:hidden">
-              <div className="rounded-2xl border border-stone-200 bg-white p-6 shadow-xl">
-                <BookingWidget
-                  listingId={property.listingId ?? 0}
-                  nightlyRate={property.startingPrice}
-                  cleaningFee={property.cleaningFee ?? 0}
-                />
-              </div>
-            </div>
 
             {/* Section 8 — House rules */}
             <div className="py-8">
@@ -428,7 +419,7 @@ export default async function PropertyPage({
           {/* RIGHT COLUMN — Sticky booking widget (desktop) */}
           <aside className="hidden lg:block">
             <div className="rounded-2xl border border-stone-200 bg-white p-6 shadow-xl lg:sticky lg:top-28">
-              <BookingWidget
+              <DesktopWidgetWrapper
                 listingId={property.listingId ?? 0}
                 nightlyRate={property.startingPrice}
                 cleaningFee={property.cleaningFee ?? 0}
