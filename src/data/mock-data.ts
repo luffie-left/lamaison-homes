@@ -27,6 +27,12 @@ export type Property = {
   pool?: boolean;
   cleaningFee?: number;
   listingId?: number;
+  lat?: number;
+  lng?: number;
+  checkInTime?: number;
+  checkOutTime?: number;
+  listingBedTypes?: Array<{ bedTypeId: number; quantity: number; bedroomNumber: number }>;
+  publicDescription?: string;
 };
 
 export const properties: Property[] = [

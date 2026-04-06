@@ -50,6 +50,9 @@ export type HostawayListing = {
   name: string;
   city: string;
   address: string;
+  publicAddress?: string;
+  lat?: number;
+  lng?: number;
   bedroomsNumber: number;
   bathroomsNumber: number;
   personCapacity: number;
@@ -57,6 +60,8 @@ export type HostawayListing = {
   cleaningFee: number;
   publicDescription: string;
   houseRules: string;
+  checkInTime?: number;
+  checkOutTime?: number;
   listingImages: Array<{ url: string; sortOrder: number }>;
   listingBedTypes: Array<{
     bedTypeId: number;
@@ -99,7 +104,7 @@ export function mapToProperty(listing: HostawayListing): Property {
     title: listing.name,
     shortTagline:
       listing.publicDescription?.split(".")[0]?.trim() ?? listing.name,
-    suburb: listing.city ?? "Melbourne",
+    suburb: listing.publicAddress ?? listing.city ?? "Melbourne",
     city: "Melbourne",
     country: "Australia",
     sleeps: listing.personCapacity ?? 2,
@@ -115,10 +120,11 @@ export function mapToProperty(listing: HostawayListing): Property {
     startingPrice: listing.price ?? 0,
     cleaningFee: listing.cleaningFee ?? 0,
     heroImage: sortedImages[0]?.url ?? "",
-    gallery: sortedImages.slice(0, 4).map((i) => i.url),
+    gallery: sortedImages.slice(0, 5).map((i) => i.url),
     amenities: listing.amenities ?? [],
     descriptionShort: listing.publicDescription?.substring(0, 200) ?? "",
     descriptionLong: listing.publicDescription ?? "",
+    publicDescription: listing.publicDescription ?? "",
     houseRules: listing.houseRules
       ? listing.houseRules.split("\n").filter(Boolean)
       : ["No parties", "No smoking", "Respect quiet hours after 10pm"],
@@ -135,5 +141,10 @@ export function mapToProperty(listing: HostawayListing): Property {
     ),
     familyFriendly: (listing.personCapacity ?? 0) >= 4,
     listingId: listing.id,
+    lat: listing.lat,
+    lng: listing.lng,
+    checkInTime: listing.checkInTime,
+    checkOutTime: listing.checkOutTime,
+    listingBedTypes: listing.listingBedTypes ?? [],
   };
 }
