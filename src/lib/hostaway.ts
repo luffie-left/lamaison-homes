@@ -94,6 +94,26 @@ export type HostawayCalendarResponse = {
   result: HostawayCalendarEntry[];
 };
 
+
+// Extract suburb only from publicAddress (strip postcode, country, non-English characters)
+function cleanSuburb(publicAddress: string | undefined, city: string | undefined): string {
+  if (!publicAddress) return city ?? "Melbourne"
+  // Remove postcodes (4 digits), Chinese/non-Latin chars, "Australia" variants, "Victoria", commas
+  const cleaned = publicAddress
+    .replace(/[\u4e00-\u9fff\u3400-\u4dbf]+/g, '') // remove CJK characters
+    .replace(/\b\d{4}\b/g, '')                        // remove 4-digit postcodes
+    .replace(/\bAustralia\b/gi, '')
+    .replace(/\bVictoria\b/gi, '')
+    .replace(/\bVIC\b/gi, '')
+    .replace(/,\s*,/g, ',')                            // clean double commas
+    .replace(/^,+|,+$/g, '')                           // trim leading/trailing commas
+    .split(',')
+    .map(s => s.trim())
+    .filter(s => s.length > 0)
+  // Return the suburb part (usually 2nd segment: "828 Whitehorse Road, Box Hill")
+  return cleaned[1] ?? cleaned[0] ?? city ?? "Melbourne"
+}
+
 export function mapToProperty(listing: HostawayListing): Property {
   const sortedImages = (listing.listingImages ?? []).sort(
     (a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0)
@@ -104,7 +124,7 @@ export function mapToProperty(listing: HostawayListing): Property {
     title: listing.name,
     shortTagline:
       listing.publicDescription?.split(".")[0]?.trim() ?? listing.name,
-    suburb: listing.publicAddress ?? listing.city ?? "Melbourne",
+    suburb: cleanSuburb(listing.publicAddress, listing.city),
     city: "Melbourne",
     country: "Australia",
     sleeps: listing.personCapacity ?? 2,
