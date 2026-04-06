@@ -16,6 +16,15 @@ import {
   Trophy,
   KeyRound,
   CalendarDays,
+  Bath,
+  Sparkles,
+  Accessibility,
+  Flame,
+  Coffee,
+  Wind,
+  ParkingSquare,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 
 import { PropertyCard } from "@/components/cards/property-card";
@@ -61,22 +70,21 @@ async function getSimilarStays(currentSlug: string): Promise<Property[]> {
 // Map amenity string to a Lucide icon
 function amenityIcon(amenity: string) {
   const a = amenity.toLowerCase();
-  if (/wifi|wi-fi|internet/.test(a)) return <Wifi className="h-5 w-5" />;
-  if (/parking|car|garage/.test(a)) return <Car className="h-5 w-5" />;
-  if (/kitchen|cook/.test(a)) return <UtensilsCrossed className="h-5 w-5" />;
-  if (/air con|aircon|ac|cooling|hvac/.test(a)) return <AirVent className="h-5 w-5" />;
-  if (/washer|laundry|dryer/.test(a)) return (
-    <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-      <circle cx="12" cy="12" r="10" />
-      <circle cx="12" cy="12" r="4" />
-      <path d="M7 7l2 2M17 7l-2 2" />
-    </svg>
-  );
-  if (/\btv\b|television|streaming/.test(a)) return <Tv className="h-5 w-5" />;
-  if (/pool|swim/.test(a)) return <Waves className="h-5 w-5" />;
-  if (/gym|fitness|exercise/.test(a)) return <Dumbbell className="h-5 w-5" />;
-  if (/balcon|terrace|patio|deck/.test(a)) return <TreePine className="h-5 w-5" />;
+  if (/wifi|wi-fi|internet|wireless/.test(a)) return <Wifi className="h-5 w-5" />;
+  if (/\bparking\b|\bcar\b|garage|driveway/.test(a)) return <ParkingSquare className="h-5 w-5" />;
+  if (/kitchen|cook|microwave|oven/.test(a)) return <UtensilsCrossed className="h-5 w-5" />;
+  if (/air.?con|aircon|\bac\b|cooling|hvac|climate/.test(a)) return <AirVent className="h-5 w-5" />;
+  if (/washer|laundry|dryer|washing/.test(a)) return <Wind className="h-5 w-5" />;
+  if (/\btv\b|television|streaming|netflix/.test(a)) return <Tv className="h-5 w-5" />;
+  if (/pool|swim|spa|jacuzzi|hot.?tub/.test(a)) return <Waves className="h-5 w-5" />;
+  if (/gym|fitness|exercise|workout/.test(a)) return <Dumbbell className="h-5 w-5" />;
+  if (/balcon|terrace|patio|deck|outdoor/.test(a)) return <TreePine className="h-5 w-5" />;
   if (/elevator|lift/.test(a)) return <ArrowUpDown className="h-5 w-5" />;
+  if (/ensuite|\bbath\b|shower/.test(a)) return <Bath className="h-5 w-5" />;
+  if (/firework|\bbbq\b|fireplace|fire.?pit/.test(a)) return <Sparkles className="h-5 w-5" />;
+  if (/disabilit|accessible|wheelchair/.test(a)) return <Accessibility className="h-5 w-5" />;
+  if (/heating|heater|\bgas\b/.test(a)) return <Flame className="h-5 w-5" />;
+  if (/coffee|espresso|nespresso/.test(a)) return <Coffee className="h-5 w-5" />;
   return <Check className="h-5 w-5" />;
 }
 
@@ -304,23 +312,27 @@ export default async function PropertyPage({
             {/* Section 6 — Amenities */}
             <div className="py-8">
               <h2 className="mb-6 text-xl font-medium text-stone-950">What this place offers</h2>
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 {shownAmenities.map((a) => (
                   <div key={a} className="flex items-center gap-3 text-stone-700">
-                    <span className="flex-shrink-0 text-stone-500">{amenityIcon(a)}</span>
+                    <span className="flex-shrink-0 rounded-lg bg-stone-100 p-2 text-stone-600">{amenityIcon(a)}</span>
                     <span className="text-sm">{a}</span>
                   </div>
                 ))}
               </div>
               {remainingAmenities.length > 0 && (
-                <details className="mt-5">
-                  <summary className="cursor-pointer rounded-xl border border-stone-300 px-5 py-2.5 text-sm font-medium text-stone-900 hover:bg-stone-50 inline-block list-none">
-                    Show all {amenities.length} amenities
+                <details className="mt-6 group">
+                  <summary className="cursor-pointer list-none">
+                    <div className="inline-flex items-center gap-2 rounded-xl border border-stone-950 px-5 py-2.5 text-sm font-medium text-stone-950 hover:bg-stone-950 hover:text-stone-50 transition-colors">
+                      <span>Show all {amenities.length} amenities</span>
+                      <ChevronDown className="h-4 w-4 group-open:hidden" />
+                      <ChevronUp className="h-4 w-4 hidden group-open:block" />
+                    </div>
                   </summary>
-                  <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
                     {remainingAmenities.map((a) => (
                       <div key={a} className="flex items-center gap-3 text-stone-700">
-                        <span className="flex-shrink-0 text-stone-500">{amenityIcon(a)}</span>
+                        <span className="flex-shrink-0 rounded-lg bg-stone-100 p-2 text-stone-600">{amenityIcon(a)}</span>
                         <span className="text-sm">{a}</span>
                       </div>
                     ))}
@@ -352,30 +364,43 @@ export default async function PropertyPage({
             {/* Section 8 — House rules */}
             <div className="py-8">
               <h2 className="mb-6 text-xl font-medium text-stone-950">House rules</h2>
-              <div className="space-y-3">
+              <div className="space-y-4 mb-5">
                 {property.checkInTime !== undefined && (
-                  <div className="flex items-center gap-3 text-sm text-stone-600">
-                    <span className="font-medium text-stone-800">Check-in:</span>
-                    <span>After {formatTime(property.checkInTime)}</span>
+                  <div className="flex items-center gap-4 text-sm">
+                    <span className="w-28 font-medium text-stone-800">Check-in</span>
+                    <span className="text-stone-600">After {formatTime(property.checkInTime)}</span>
                   </div>
                 )}
                 {property.checkOutTime !== undefined && (
-                  <div className="flex items-center gap-3 text-sm text-stone-600">
-                    <span className="font-medium text-stone-800">Check-out:</span>
-                    <span>Before {formatTime(property.checkOutTime)}</span>
+                  <div className="flex items-center gap-4 text-sm">
+                    <span className="w-28 font-medium text-stone-800">Check-out</span>
+                    <span className="text-stone-600">Before {formatTime(property.checkOutTime)}</span>
                   </div>
                 )}
-                {property.houseRules.map((rule, i) => (
-                  <div key={i} className="flex items-start gap-3 text-sm text-stone-600">
-                    <span className="mt-0.5 text-stone-400">✓</span>
-                    <span>{rule}</span>
-                  </div>
-                ))}
-                <div className="flex items-start gap-3 text-sm text-stone-600">
-                  <span className="mt-0.5 text-stone-400">✓</span>
-                  <span>Max {property.sleeps} guests</span>
+                <div className="flex items-center gap-4 text-sm">
+                  <span className="w-28 font-medium text-stone-800">Max guests</span>
+                  <span className="text-stone-600">{property.sleeps} guests</span>
                 </div>
               </div>
+              {property.houseRules.length > 0 && (
+                <details className="group">
+                  <summary className="cursor-pointer list-none">
+                    <div className="inline-flex items-center gap-2 rounded-xl border border-stone-950 px-5 py-2.5 text-sm font-medium text-stone-950 hover:bg-stone-950 hover:text-stone-50 transition-colors">
+                      <span>Show all rules</span>
+                      <ChevronDown className="h-4 w-4 group-open:hidden" />
+                      <ChevronUp className="h-4 w-4 hidden group-open:block" />
+                    </div>
+                  </summary>
+                  <div className="mt-5 space-y-3">
+                    {property.houseRules.map((rule, i) => (
+                      <div key={i} className="flex items-start gap-3 text-sm text-stone-600">
+                        <span className="mt-0.5 flex-shrink-0 text-stone-400">✓</span>
+                        <span>{rule}</span>
+                      </div>
+                    ))}
+                  </div>
+                </details>
+              )}
             </div>
             <hr className="border-stone-200" />
 
