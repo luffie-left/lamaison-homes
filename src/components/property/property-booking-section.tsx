@@ -121,8 +121,8 @@ export function DesktopBookingWidget({
       listingId={listingId}
       nightlyRate={nightlyRate}
       cleaningFee={cleaningFee}
-      initialCheckIn={checkIn ?? undefined}
-      initialCheckOut={checkOut ?? undefined}
+      checkInDate={checkIn ?? undefined}
+      checkOutDate={checkOut ?? undefined}
     />
   );
 }
