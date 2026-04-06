@@ -25,15 +25,33 @@ export default function StaysPage() {
   const [priceMax, setPriceMax] = useState("");
   const [sortBy, setSortBy] = useState("recommended");
 
-  // Load all stays once on mount (but don't show them)
+  // Load stays + showcases on mount, merge into a single pool
   useEffect(() => {
     const load = async () => {
       try {
         const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "";
-        const res = await fetch(`${appUrl}/api/stays`, { cache: "no-store" });
-        if (!res.ok) return;
-        const data = await res.json();
-        setAllStays(data.stays ?? []);
+        const [staysRes, showcasesRes] = await Promise.all([
+          fetch(`${appUrl}/api/stays`, { cache: "no-store" }),
+          fetch(`${appUrl}/api/showcases`, { cache: "no-store" }),
+        ]);
+
+        const staysData = staysRes.ok ? await staysRes.json() : { stays: [] };
+        const baseProperties: Property[] = staysData.stays ?? [];
+
+        // Showcases: shaped as Property, with showcase hero image
+        let showcaseCards: Property[] = [];
+        if (showcasesRes.ok) {
+          const rawShowcases = await showcasesRes.json();
+          if (Array.isArray(rawShowcases)) {
+            showcaseCards = rawShowcases.map((sc: Property & { id: string }) => ({
+              ...sc,
+              // id is the showcase id — slug still points to the same property page
+            }));
+          }
+        }
+
+        // Merge: base properties first, then showcase cards (which add extra hero variants)
+        setAllStays([...baseProperties, ...showcaseCards]);
       } catch {}
     };
     load();
@@ -252,13 +270,9 @@ export default function StaysPage() {
             </div>
           ) : (
             <>
-              <p className="text-sm text-stone-500 mb-5">
-                {results.length} {results.length === 1 ? "stay" : "stays"} found
-                {location !== "All Melbourne" ? ` in ${location}` : " across Melbourne"}
-              </p>
               <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-                {results.map((property) => (
-                  <PropertyCard key={property.slug} property={property} />
+                {results.map((property, idx) => (
+                  <PropertyCard key={`${property.slug}-${idx}`} property={property} />
                 ))}
               </div>
             </>
