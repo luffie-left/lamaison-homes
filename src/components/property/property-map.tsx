@@ -17,7 +17,7 @@ export function PropertyMap({ lat, lng, suburb, city }: PropertyMapProps) {
     if (!mapRef.current || mapInstanceRef.current) return;
 
     // Randomise pin within ~100m
-    const OFFSET = 0.0008;
+    const OFFSET = 0.00027; // ~30m offset
     const displayLat = lat + (Math.random() - 0.5) * OFFSET;
     const displayLng = lng + (Math.random() - 0.5) * OFFSET;
 
@@ -46,7 +46,7 @@ export function PropertyMap({ lat, lng, suburb, city }: PropertyMapProps) {
 
       // Show circle instead of precise pin
       L.circle([displayLat, displayLng], {
-        radius: 200,
+        radius: 30,
         color: "#c9a96e",
         fillColor: "#c9a96e",
         fillOpacity: 0.15,
