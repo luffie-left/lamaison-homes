@@ -10,7 +10,7 @@ export async function GET(req: NextRequest) {
   const SERVICE_KEY = (process.env.SUPABASE_SERVICE_ROLE_KEY ?? "").replace(/\n/g, "");
 
   const res = await fetch(
-    `${SUPABASE_URL}/rest/v1/leads?portal_token=eq.${encodeURIComponent(token)}&select=id,name,email,reference,property_name,listing_id,check_in,check_out,nights,num_guests,total_amount,status,created_at`,
+    `${SUPABASE_URL}/rest/v1/leads?portal_token=eq.${encodeURIComponent(token)}&select=id,name,email,phone,reference,portal_token,property_name,listing_id,check_in,check_out,nights,num_guests,total_amount,nightly_rate,cleaning_fee,status,created_at`,
     { headers: { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}` } }
   );
 

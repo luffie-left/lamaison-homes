@@ -19,7 +19,7 @@ function nightsBetween(a: string | null, b: string | null): number | null {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { name, email, phone, listingId, checkIn, checkOut, guests, message, propertyName, total } = body;
+    const { name, email, phone, listingId, checkIn, checkOut, guests, message, propertyName, total, nightlyRate, cleaningFee } = body;
 
     if (!name || !email || !listingId) {
       return NextResponse.json({ error: "name, email, and listingId are required" }, { status: 400 });
@@ -62,6 +62,8 @@ export async function POST(req: NextRequest) {
         nights: nights,
         num_guests: guests ? Number(guests) : null,
         total_amount: total ? Number(total) : null,
+        nightly_rate: nightlyRate ? Number(nightlyRate) : null,
+        cleaning_fee: cleaningFee ? Number(cleaningFee) : null,
       }),
     });
 

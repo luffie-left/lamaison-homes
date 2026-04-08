@@ -183,7 +183,7 @@ export function PropertyBookingSection({
       const res = await fetch("/api/enquiry", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, phone, listingId, checkIn, checkOut, guests, message, total: total > 0 ? total : null }),
+        body: JSON.stringify({ name, email, phone, listingId, checkIn, checkOut, guests, message, total: total > 0 ? total : null, nightlyRate, cleaningFee }),
       });
       if (!res.ok) throw new Error("Failed");
       const data = await res.json();
