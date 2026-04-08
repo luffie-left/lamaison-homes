@@ -134,6 +134,8 @@ export function PropertyBookingSection({
   const [message, setMessage] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [bookingRef, setBookingRef] = useState<string | null>(null);
+  const [portalToken, setPortalToken] = useState<string | null>(null);
 
   const checkIn = selectedStart ? format(selectedStart, "yyyy-MM-dd") : null;
   const checkOut = selectedEnd ? format(selectedEnd, "yyyy-MM-dd") : null;
@@ -181,9 +183,12 @@ export function PropertyBookingSection({
       const res = await fetch("/api/enquiry", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, phone, listingId, checkIn, checkOut, guests, message }),
+        body: JSON.stringify({ name, email, phone, listingId, checkIn, checkOut, guests, message, total: total > 0 ? total : null }),
       });
       if (!res.ok) throw new Error("Failed");
+      const data = await res.json();
+      setBookingRef(data.reference ?? null);
+      setPortalToken(data.portalToken ?? null);
       setStep("confirmed");
     } catch {
       setError("Something went wrong. Please try again.");
@@ -196,9 +201,19 @@ export function PropertyBookingSection({
     <div className="rounded-2xl border border-stone-200 bg-white p-6 shadow-xl">
       {step === "confirmed" ? (
         <div className="text-center py-6">
-          <div className="text-3xl mb-3">✓</div>
+          <div className="w-12 h-12 rounded-full bg-green-50 flex items-center justify-center mx-auto mb-3">
+            <span className="text-green-600 text-xl">✓</span>
+          </div>
           <p className="text-lg font-medium text-stone-900 mb-1">Enquiry received</p>
-          <p className="text-sm text-stone-500">We&apos;ll confirm your booking within 2 hours.</p>
+          {bookingRef && (
+            <p className="text-xs font-mono bg-stone-100 text-stone-700 px-3 py-1.5 rounded-lg inline-block mb-3">{bookingRef}</p>
+          )}
+          <p className="text-sm text-stone-500 mb-4">Check your email — we&apos;ll confirm within 2 hours.</p>
+          {portalToken && (
+            <a href={`/portal?token=${portalToken}`} className="inline-block text-sm text-stone-950 underline underline-offset-2 hover:text-stone-600">
+              View booking details →
+            </a>
+          )}
         </div>
       ) : (
         <>
