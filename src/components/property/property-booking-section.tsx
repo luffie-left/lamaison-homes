@@ -122,8 +122,10 @@ export function PropertyBookingSection({
   const [selectedStart, setSelectedStart] = useState<Date | null>(null);
   const [selectedEnd, setSelectedEnd] = useState<Date | null>(null);
   const [hovered, setHovered] = useState<Date | null>(null);
-  const month0 = startOfMonth(new Date());
+  const [calendarOffset, setCalendarOffset] = useState(0); // months from today
+  const month0 = addMonths(startOfMonth(new Date()), calendarOffset);
   const month1 = addMonths(month0, 1);
+  const maxOffset = 11; // show up to 12 months ahead
 
   // Form state
   const [step, setStep] = useState<Step>("dates");
@@ -235,9 +237,34 @@ export function PropertyBookingSection({
             {calLoading ? (
               <p className="text-xs text-stone-400 py-4 text-center">Loading availability…</p>
             ) : (
-              <div className="grid gap-6 sm:grid-cols-2">
-                <CalendarMonth monthDate={month0} blockedDates={blockedDates} selectedStart={selectedStart} selectedEnd={selectedEnd} hovered={hovered} onDayClick={handleDayClick} onDayHover={setHovered} />
-                <CalendarMonth monthDate={month1} blockedDates={blockedDates} selectedStart={selectedStart} selectedEnd={selectedEnd} hovered={hovered} onDayClick={handleDayClick} onDayHover={setHovered} />
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <button
+                    type="button"
+                    onClick={() => setCalendarOffset(o => Math.max(0, o - 2))}
+                    disabled={calendarOffset === 0}
+                    className="p-1.5 rounded-lg text-stone-400 hover:bg-stone-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                    aria-label="Previous months"
+                  >
+                    ‹
+                  </button>
+                  <span className="text-xs text-stone-400">
+                    {format(month0, 'MMM yyyy')} – {format(month1, 'MMM yyyy')}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setCalendarOffset(o => Math.min(maxOffset - 1, o + 2))}
+                    disabled={calendarOffset >= maxOffset - 1}
+                    className="p-1.5 rounded-lg text-stone-400 hover:bg-stone-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                    aria-label="Next months"
+                  >
+                    ›
+                  </button>
+                </div>
+                <div className="grid gap-6 sm:grid-cols-2">
+                  <CalendarMonth monthDate={month0} blockedDates={blockedDates} selectedStart={selectedStart} selectedEnd={selectedEnd} hovered={hovered} onDayClick={handleDayClick} onDayHover={setHovered} />
+                  <CalendarMonth monthDate={month1} blockedDates={blockedDates} selectedStart={selectedStart} selectedEnd={selectedEnd} hovered={hovered} onDayClick={handleDayClick} onDayHover={setHovered} />
+                </div>
               </div>
             )}
             {(checkIn || checkOut) && (
