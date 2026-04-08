@@ -86,7 +86,7 @@ export async function sendEnquiryConfirmation(opts: {
 
     <a href="${portalUrl}" style="display:block;background:#1a1a1a;color:#fff;text-align:center;padding:14px 24px;border-radius:50px;text-decoration:none;font-size:14px;margin:0 0 24px;">View your booking →</a>
 
-    <p style="color:#aaa;font-size:13px;line-height:1.6;margin:0;">Questions? Reply to this email or contact us at <a href="mailto:hello@lamaisonhomes.com.au" style="color:#c9a96e;">hello@lamaisonhomes.com.au</a></p>
+    <p style="color:#aaa;font-size:13px;line-height:1.6;margin:0;">Questions? Reply to this email or contact us at <a href="mailto:bookings@lamaisonhomes.com.au" style="color:#c9a96e;">bookings@lamaisonhomes.com.au</a></p>
   </div>
   <p style="color:#aaa;font-size:11px;text-align:center;margin:16px 0 0;">La Maison Homes · Premium short-stay management · Melbourne</p>
 </div>
@@ -178,11 +178,20 @@ export async function sendBookingConfirmed(opts: {
       </table>
     </div>
 
+    ${opts.total ? `
+    <div style="border:1px solid #e8e0d6;border-radius:8px;padding:20px;margin:0 0 24px;">
+      <p style="color:#888;font-size:11px;letter-spacing:2px;text-transform:uppercase;margin:0 0 12px;">Invoice</p>
+      <table style="width:100%;border-collapse:collapse;">
+        <tr style="border-bottom:1px solid #f0ebe4;"><td style="padding:8px 0;color:#5a5a5a;font-size:13px;">Accommodation (${opts.nights ?? 1} night${(opts.nights ?? 1) !== 1 ? 's' : ''})</td><td style="padding:8px 0;color:#1a1a1a;font-size:13px;text-align:right;">${formatCurrency(opts.total)}</td></tr>
+        <tr style="border-top:2px solid #1a1a1a;"><td style="padding:10px 0;color:#1a1a1a;font-size:14px;font-weight:bold;">Total due</td><td style="padding:10px 0;color:#1a1a1a;font-size:14px;font-weight:bold;text-align:right;">${formatCurrency(opts.total)} AUD</td></tr>
+      </table>
+      <p style="color:#c9a96e;font-size:12px;margin:10px 0 0;">⏳ Payment details will be sent separately</p>
+    </div>` : ''}
     <p style="color:#5a5a5a;font-size:14px;line-height:1.7;margin:0 0 24px;">We'll send your detailed check-in instructions, property address, and access code <strong>48 hours before your arrival</strong>.</p>
 
-    <a href="${portalUrl}" style="display:block;background:#1a1a1a;color:#fff;text-align:center;padding:14px 24px;border-radius:50px;text-decoration:none;font-size:14px;margin:0 0 24px;">View booking details →</a>
+    <a href="${portalUrl}" style="display:block;background:#1a1a1a;color:#fff;text-align:center;padding:14px 24px;border-radius:50px;text-decoration:none;font-size:14px;margin:0 0 24px;">View booking &amp; invoice →</a>
 
-    <p style="color:#aaa;font-size:13px;">Questions? <a href="mailto:hello@lamaisonhomes.com.au" style="color:#c9a96e;">hello@lamaisonhomes.com.au</a></p>
+    <p style="color:#aaa;font-size:13px;">Questions? <a href="mailto:bookings@lamaisonhomes.com.au" style="color:#c9a96e;">bookings@lamaisonhomes.com.au</a></p>
   </div>
   <p style="color:#aaa;font-size:11px;text-align:center;margin:16px 0 0;">La Maison Homes · Melbourne</p>
 </div>
@@ -213,7 +222,7 @@ export async function sendBookingDeclined(opts: {
     <p style="color:#5a5a5a;line-height:1.7;margin:0 0 24px;">Unfortunately, those dates (${formatDate(opts.checkIn)} – ${formatDate(opts.checkOut)}) are no longer available.</p>
     <p style="color:#5a5a5a;line-height:1.7;margin:0 0 24px;">We'd love to help you find an alternative — browse our Melbourne collection or reply with alternative dates and we'll do our best to accommodate you.</p>
     <a href="https://lamaison-homes.vercel.app/stays" style="display:block;background:#1a1a1a;color:#fff;text-align:center;padding:14px 24px;border-radius:50px;text-decoration:none;font-size:14px;margin:0 0 24px;">Browse other stays →</a>
-    <p style="color:#aaa;font-size:13px;">Questions? <a href="mailto:hello@lamaisonhomes.com.au" style="color:#c9a96e;">hello@lamaisonhomes.com.au</a></p>
+    <p style="color:#aaa;font-size:13px;">Questions? <a href="mailto:bookings@lamaisonhomes.com.au" style="color:#c9a96e;">bookings@lamaisonhomes.com.au</a></p>
   </div>
   <p style="color:#aaa;font-size:11px;text-align:center;margin:16px 0 0;">La Maison Homes · Melbourne</p>
 </div>

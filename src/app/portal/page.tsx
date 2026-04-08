@@ -188,11 +188,36 @@ function PortalContent() {
           </div>
         )}
 
+        {/* Invoice */}
+        {booking.total_amount && (
+          <div className="bg-white rounded-2xl border border-stone-100 shadow-sm overflow-hidden">
+            <div className="px-5 py-4 border-b border-stone-100 flex items-center justify-between">
+              <p className="text-xs font-semibold text-stone-400 uppercase tracking-wide">Invoice</p>
+              <p className="text-xs font-mono text-stone-500">{booking.reference}</p>
+            </div>
+            <div className="p-5 space-y-3">
+              <div className="flex justify-between text-sm">
+                <span className="text-stone-600">Accommodation{booking.nights ? ` (${booking.nights} night${booking.nights !== 1 ? 's' : ''})` : ''}</span>
+                <span className="text-stone-900 font-medium">{formatCurrency(booking.total_amount)}</span>
+              </div>
+              <div className="flex justify-between text-sm border-t border-stone-100 pt-3">
+                <span className="font-semibold text-stone-900">Total</span>
+                <span className="font-bold text-stone-900">{formatCurrency(booking.total_amount)} AUD</span>
+              </div>
+              <div className={`mt-3 rounded-xl px-4 py-3 text-center text-xs font-medium ${
+                booking.status === 'confirmed' ? 'bg-amber-50 text-amber-700 border border-amber-200' : 'bg-stone-50 text-stone-500'
+              }`}>
+                {booking.status === 'confirmed' ? '⏳ Payment details will be sent separately' : 'Awaiting confirmation'}
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Contact */}
         <div className="bg-white rounded-2xl border border-stone-100 shadow-sm p-5 text-center">
           <p className="text-sm text-stone-500 mb-1">Questions about your booking?</p>
-          <a href="mailto:hello@lamaisonhomes.com.au" className="text-sm font-medium text-stone-900 underline underline-offset-2">
-            hello@lamaisonhomes.com.au
+          <a href="mailto:bookings@lamaisonhomes.com.au" className="text-sm font-medium text-stone-900 underline underline-offset-2">
+            bookings@lamaisonhomes.com.au
           </a>
         </div>
       </div>

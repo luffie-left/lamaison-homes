@@ -5,7 +5,7 @@ export const siteConfig = {
     "Curated Melbourne stays with hotel-grade care. Beautifully selected homes. Seamless guest stays. Professional short-stay management.",
   url: process.env.NEXT_PUBLIC_SITE_URL || "https://lamaisonhomes.com.au",
   ogImage: "/placeholders/home-hero-fallback.jpg",
-  email: "hello@lamaisonhomes.com.au",
+  email: "bookings@lamaisonhomes.com.au",
   phone: "+61 400 000 000",
   social: {
     instagram: "https://instagram.com/lamaisonhomes",
