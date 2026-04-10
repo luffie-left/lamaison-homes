@@ -15,6 +15,7 @@ import {
 import { PropertyCard } from "@/components/cards/property-card";
 import { TestimonialCard } from "@/components/cards/testimonial-card";
 import { IconPromiseCard } from "@/components/cards/icon-promise-card";
+import { PhotoPromiseCard } from "@/components/cards/photo-promise-card";
 import { EditorialCard } from "@/components/cards/editorial-card";
 import { CtaSplitPanel } from "@/components/sections/cta-split-panel";
 import { SectionHeading } from "@/components/sections/section-heading";
@@ -24,24 +25,34 @@ import type { Property } from "@/data/mock-data";
 
 const guestPromiseCards = [
   {
-    title: "Curated Homes",
-    description: "Only carefully selected stays that meet our quality, design, and guest-readiness standards.",
-    icon: MapPinHouse,
+    title: "Professionally Managed",
+    description: "Every home is managed to a professional short-stay standard — inspected, prepared, and maintained for guest-ready arrival every time.",
+    image: "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800&q=80",
   },
   {
-    title: "Book Direct with Confidence",
-    description: "Clear communication, strong standards, and a booking experience shaped around trust.",
-    icon: ShieldCheck,
+    title: "Carefully Selected",
+    description: "Only homes that meet our design, quality, and comfort criteria make it into the La Maison collection.",
+    image: "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80",
   },
   {
-    title: "Local Guest Support",
-    description: "Melbourne-based hospitality thinking, with concierge support when it matters.",
-    icon: ConciergeBell,
+    title: "Verified Home Details",
+    description: "What you see is what you get. Accurate photos, honest descriptions, and no surprises on arrival.",
+    image: "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=800&q=80",
   },
   {
-    title: "Seamless Stay Standards",
-    description: "Professionally managed homes designed for comfort, consistency, and calm arrival experiences.",
-    icon: Sparkles,
+    title: "Guest Support",
+    description: "Melbourne-based support available before, during, and after your stay. Real people, real help.",
+    image: "https://images.unsplash.com/photo-1553877522-43269d4ea984?w=800&q=80",
+  },
+  {
+    title: "Cleaning Standards",
+    description: "Hotel-grade cleaning and linen standards between every stay. Fresh, clean, and ready on arrival.",
+    image: "https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=800&q=80",
+  },
+  {
+    title: "Secure Booking",
+    description: "Book direct with confidence. Transparent pricing, clear terms, and a booking experience built on trust.",
+    image: "https://images.unsplash.com/photo-1563013544-824ae1b704d3?w=800&q=80",
   },
 ];
 
@@ -137,9 +148,9 @@ export default async function Home() {
           title="Why guests book with La Maison Homes"
           description="A guest-first promise strip that keeps the opening journey clear, premium, and conversion-led."
         />
-        <div className="mt-8 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+        <div className="mt-8 grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
           {guestPromiseCards.map((card) => (
-            <IconPromiseCard key={card.title} {...card} />
+            <PhotoPromiseCard key={card.title} title={card.title} description={card.description} image={card.image} />
           ))}
         </div>
       </section>

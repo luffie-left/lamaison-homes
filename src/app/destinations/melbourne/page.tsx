@@ -49,6 +49,7 @@ export default async function MelbournePage() {
             <SuburbCard key={suburb} name={suburb} />
           ))}
         </div>
+        <p className="mt-4 text-xs text-stone-400 text-center">Click any neighbourhood to browse stays in that area</p>
       </section>
 
       <section className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">

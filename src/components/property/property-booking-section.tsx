@@ -124,7 +124,7 @@ export function PropertyBookingSection({
   const [hovered, setHovered] = useState<Date | null>(null);
   const [calendarOffset, setCalendarOffset] = useState(0); // months from today
   const month0 = addMonths(startOfMonth(new Date()), calendarOffset);
-  const month1 = addMonths(month0, 1);
+  const month1 = addMonths(month0, 1); // second month (still show 2 for context)
   const maxOffset = 11; // show up to 12 months ahead
 
   // Form state
@@ -241,7 +241,7 @@ export function PropertyBookingSection({
                 <div className="flex items-center justify-between mb-3">
                   <button
                     type="button"
-                    onClick={() => setCalendarOffset(o => Math.max(0, o - 2))}
+                    onClick={() => setCalendarOffset(o => Math.max(0, o - 1))}
                     disabled={calendarOffset === 0}
                     className="p-1.5 rounded-lg text-stone-400 hover:bg-stone-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                     aria-label="Previous months"
@@ -253,7 +253,7 @@ export function PropertyBookingSection({
                   </span>
                   <button
                     type="button"
-                    onClick={() => setCalendarOffset(o => Math.min(maxOffset - 1, o + 2))}
+                    onClick={() => setCalendarOffset(o => Math.min(maxOffset - 1, o + 1))}
                     disabled={calendarOffset >= maxOffset - 1}
                     className="p-1.5 rounded-lg text-stone-400 hover:bg-stone-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                     aria-label="Next months"
