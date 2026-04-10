@@ -13,6 +13,32 @@ const BEDROOM_OPTIONS = ["Any", "1", "2", "3", "4+"];
 const GUEST_OPTIONS = ["Any", "1", "2", "3", "4", "5", "6+"];
 const PAGE_SIZE = 12;
 
+// Suburb centre coordinates for distance sorting (lat, lng)
+const SUBURB_COORDS: Record<string, [number, number]> = {
+  "CBD":          [-37.8136, 144.9631],
+  "Southbank":    [-37.8224, 144.9631],
+  "Docklands":    [-37.8148, 144.9450],
+  "Fitzroy":      [-37.7990, 144.9760],
+  "South Yarra":  [-37.8390, 144.9918],
+  "St Kilda":     [-37.8679, 144.9826],
+  "Richmond":     [-37.8235, 145.0012],
+  "Carlton":      [-37.7986, 144.9680],
+  "Box Hill":     [-37.8174, 145.1175],
+  "Doncaster":    [-37.7893, 145.1253],
+  "Melbourne":    [-37.8136, 144.9631],
+  "West Melbourne": [-37.8065, 144.9443],
+}
+
+function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  const R = 6371
+  const dLat = (lat2 - lat1) * Math.PI / 180
+  const dLng = (lng2 - lng1) * Math.PI / 180
+  const a = Math.sin(dLat/2)**2 + Math.cos(lat1 * Math.PI/180) * Math.cos(lat2 * Math.PI/180) * Math.sin(dLng/2)**2
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a))
+}
+
+
+
 // ── Stable shuffle using seeded random (same seed = same order each session) ──
 function seededShuffle<T>(arr: T[], seed: number): T[] {
   const a = [...arr];
@@ -72,6 +98,7 @@ function StaysContent() {
   const [allStays, setAllStays] = useState<Property[]>([]);
   const [results, setResults] = useState<Property[]>([]);
   const [searched, setSearched] = useState(searchParams.has("loc") || searchParams.has("beds") || searchParams.has("guests"));
+  const fromUrl = searchParams.has("loc") || searchParams.has("beds") || searchParams.has("guests");
   const [loading, setLoading] = useState(false);
   const [dataLoading, setDataLoading] = useState(true);
   const [page, setPage] = useState(1);
@@ -118,8 +145,8 @@ function StaysContent() {
 
         setAllStays(spaced);
 
-        // If URL has filters, auto-apply
-        if (searched) {
+        // If URL has filters, auto-apply with distance sort if suburb specified
+        if (fromUrl) {
           applyFiltersTo(spaced);
         }
       } catch { /* silent */ }
@@ -150,6 +177,19 @@ function StaysContent() {
     else if (sortBy === "price-desc") filtered = [...filtered].sort((a, b) => b.startingPrice - a.startingPrice);
     else if (sortBy === "beds-desc") filtered = [...filtered].sort((a, b) => b.bedrooms - a.bedrooms);
     else if (sortBy === "guests-desc") filtered = [...filtered].sort((a, b) => b.sleeps - a.sleeps);
+    else if (location !== "All Melbourne") {
+      // Default when suburb selected: sort closest to furthest from suburb centre
+      const centre = SUBURB_COORDS[location]
+      if (centre) {
+        filtered = [...filtered].sort((a, b) => {
+          const aCoords = SUBURB_COORDS[a.suburb ?? ""] ?? SUBURB_COORDS[a.city ?? ""] ?? null
+          const bCoords = SUBURB_COORDS[b.suburb ?? ""] ?? SUBURB_COORDS[b.city ?? ""] ?? null
+          const aDist = aCoords ? haversineKm(centre[0], centre[1], aCoords[0], aCoords[1]) : 99
+          const bDist = bCoords ? haversineKm(centre[0], centre[1], bCoords[0], bCoords[1]) : 99
+          return aDist - bDist
+        })
+      }
+    }
     setResults(filtered);
     setPage(1);
   }
@@ -260,6 +300,7 @@ function StaysContent() {
             <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}
               className="w-full rounded-xl border border-black/10 bg-stone-50 px-3 py-2.5 text-sm text-stone-800 focus:outline-none focus:ring-1 focus:ring-stone-400">
               <option value="recommended">Recommended</option>
+              <option value="distance">Closest first</option>
               <option value="price-asc">Price: low to high</option>
               <option value="price-desc">Price: high to low</option>
               <option value="beds-desc">Most bedrooms</option>
