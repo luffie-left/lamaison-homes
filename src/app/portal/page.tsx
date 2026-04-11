@@ -73,9 +73,48 @@ function PortalContent() {
   const [property, setProperty] = useState<PropertyInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [verified, setVerified] = useState(false);
+  const [verifyEmail, setVerifyEmail] = useState("");
+  const [verifyError, setVerifyError] = useState<string | null>(null);
+  const [verifying, setVerifying] = useState(false);
+
+  // Check sessionStorage for prior verification
+  useEffect(() => {
+    if (token && typeof window !== "undefined") {
+      const prior = sessionStorage.getItem(`portal_verified_${token}`);
+      if (prior === "true") setVerified(true);
+    }
+  }, [token]);
+
+  async function handleVerify(e: React.FormEvent) {
+    e.preventDefault();
+    setVerifying(true);
+    setVerifyError(null);
+    try {
+      const res = await fetch("/api/portal/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token, email: verifyEmail }),
+      });
+      const data = await res.json();
+      if (data.verified) {
+        if (typeof window !== "undefined") sessionStorage.setItem(`portal_verified_${token}`, "true");
+        setVerified(true);
+      } else if (res.status === 429) {
+        setVerifyError("Too many attempts. Please try again in an hour.");
+      } else {
+        setVerifyError("Email doesn\'t match our records. Please check your confirmation email.");
+      }
+    } catch {
+      setVerifyError("Something went wrong. Please try again.");
+    } finally {
+      setVerifying(false);
+    }
+  }
 
   useEffect(() => {
     if (!token) { setError("Invalid link"); setLoading(false); return; }
+    if (!verified) { setLoading(false); return; }  // wait for email verification
     fetch(`/api/portal/booking?token=${encodeURIComponent(token)}`)
       .then(r => r.json())
       .then(async d => {
