@@ -106,6 +106,8 @@ function nightsBetween(a: string, b: string) {
 
 // ── Main component ────────────────────────────────────────────────────────────
 
+const IS_SANDBOX = process.env.NEXT_PUBLIC_PAYPAL_ENVIRONMENT !== 'live'
+
 export function PropertyBookingSection({
   slug,
   listingId,
@@ -135,6 +137,7 @@ export function PropertyBookingSection({
   const [phone, setPhone] = useState("");
   const [message, setMessage] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [payNowLoading, setPayNowLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [bookingRef, setBookingRef] = useState<string | null>(null);
   const [portalToken, setPortalToken] = useState<string | null>(null);
@@ -177,8 +180,9 @@ export function PropertyBookingSection({
     }
   }
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  async function handleSubmit(e?: React.FormEvent) {
+    e?.preventDefault();
+    if (!name || !email) return;
     setSubmitting(true);
     setError(null);
     try {
@@ -196,6 +200,55 @@ export function PropertyBookingSection({
       setError("Something went wrong. Please try again.");
     } finally {
       setSubmitting(false);
+    }
+  }
+
+  // Pay Now — creates enquiry then immediately redirects to PayPal
+  async function handlePayNow(e: React.FormEvent) {
+    e.preventDefault();
+    setPayNowLoading(true);
+    setError(null);
+    try {
+      // Step 1: Create enquiry in Supabase
+      const enquiryRes = await fetch("/api/enquiry", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name, email, phone, listingId, checkIn, checkOut, guests, message,
+          total: total > 0 ? total : null, nightlyRate, cleaningFee,
+          propertyName: undefined, // filled by API from listing
+        }),
+      });
+      if (!enquiryRes.ok) throw new Error("Failed to create enquiry");
+      const enquiryData = await enquiryRes.json();
+      const leadPortalToken = enquiryData.portalToken;
+
+      // Step 2: Create PayPal order
+      const orderRes = await fetch("/api/payment/create-order", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          leadId: null, // token-based lookup
+          listingId,
+          checkIn,
+          checkOut,
+          nights,
+          guests,
+          total,
+          portalToken: leadPortalToken,
+        }),
+      });
+      if (!orderRes.ok) throw new Error("Failed to create PayPal order");
+      const orderData = await orderRes.json();
+
+      if (!orderData.approveUrl) throw new Error("No PayPal redirect URL");
+
+      // Step 3: Redirect to PayPal hosted checkout
+      window.location.href = orderData.approveUrl;
+    } catch (err) {
+      console.error("[pay-now]", err);
+      setError("Something went wrong. Please try again or use Enquire.");
+      setPayNowLoading(false);
     }
   }
 
@@ -319,7 +372,7 @@ export function PropertyBookingSection({
           )}
 
           {step === "enquiry" && (
-            <form onSubmit={handleSubmit} className="space-y-3">
+            <form className="space-y-3">
               <p className="text-sm font-medium text-stone-800 mb-3">Your details</p>
               <input required placeholder="Full name" value={name} onChange={e => setName(e.target.value)}
                 className="w-full rounded-xl border border-stone-200 px-3 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-stone-400" />
@@ -330,10 +383,44 @@ export function PropertyBookingSection({
               <textarea placeholder="Any questions or special requests?" value={message} onChange={e => setMessage(e.target.value)} rows={3}
                 className="w-full rounded-xl border border-stone-200 px-3 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-stone-400" />
               {error && <p className="text-xs text-red-500">{error}</p>}
-              <button type="submit" disabled={submitting}
-                className="w-full rounded-full bg-stone-950 py-3 text-sm font-medium text-stone-50 hover:bg-stone-800 transition-colors disabled:opacity-50">
-                {submitting ? "Sending…" : "Submit enquiry"}
-              </button>
+
+              {/* Action row: Enquire + Pay Now */}
+              <div className="grid grid-cols-2 gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={handleSubmit}
+                  disabled={submitting || payNowLoading || !name || !email}
+                  className="rounded-full border border-stone-300 bg-white py-3 text-sm font-medium text-stone-800 hover:bg-stone-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  {submitting ? "Sending…" : "Enquire"}
+                </button>
+                <button
+                  type="button"
+                  onClick={handlePayNow}
+                  disabled={payNowLoading || submitting || !name || !email || total <= 0}
+                  className="rounded-full bg-[#003087] py-3 text-sm font-medium text-white hover:bg-[#002266] transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
+                >
+                  {payNowLoading ? (
+                    <><span className="w-3.5 h-3.5 border border-white/40 border-t-white rounded-full animate-spin" /> Processing…</>
+                  ) : (
+                    <>Pay {fmt(total)}</>
+                  )}
+                </button>
+              </div>
+
+              {/* PayPal trust badge */}
+              <div className="rounded-xl bg-stone-50 border border-stone-100 px-4 py-3 text-center">
+                <p className="text-xs text-stone-500 mb-1">
+                  🔒 Pay securely with PayPal · 3D Secure
+                </p>
+                <p className="text-[11px] text-stone-400">
+                  Your payment is protected by PayPal Buyer Protection
+                </p>
+                {IS_SANDBOX && (
+                  <p className="mt-1 text-[10px] text-amber-600 font-medium">🧪 Sandbox mode — no real charges</p>
+                )}
+              </div>
+
               <button type="button" onClick={() => setStep("dates")} className="w-full text-xs text-stone-400 underline hover:text-stone-700">
                 ← Back to dates
               </button>
