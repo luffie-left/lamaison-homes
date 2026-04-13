@@ -141,7 +141,7 @@ function PortalContent() {
       })
       .catch(() => setError("Unable to load booking. Please try again."))
       .finally(() => setLoading(false));
-  }, [token]);
+  }, [token, verified]);
 
   if (loading) {
     return (
