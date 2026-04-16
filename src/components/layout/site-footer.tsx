@@ -9,7 +9,7 @@ export function SiteFooter() {
       <div className="mx-auto grid max-w-7xl gap-12 px-4 py-16 sm:px-6 lg:grid-cols-[1.4fr_repeat(4,1fr)] lg:px-8">
         <div className="space-y-4">
           <Image
-            src="/logo.png"
+            src="/logo-transparent.png"
             alt="La Maison Homes"
             height={48}
             width={192}
