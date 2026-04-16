@@ -13,6 +13,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { capturePayPalOrder } from '@/lib/paypal'
+import { createHostawayReservation } from '@/lib/hostaway-reservations'
 
 export const dynamic = 'force-dynamic'
 
@@ -241,6 +242,54 @@ export async function POST(req: NextRequest) {
       )
     }
 
+    // --- Push reservation to Hostaway (blocks calendar on all channels) ---
+    // Run after DB update so we have a confirmed record even if Hostaway fails.
+    // Non-blocking — failure is logged but does not roll back the confirmed payment.
+    const hostawayResult: { ok: boolean; hostawayReservationId?: number; error?: string } =
+      await createHostawayReservation({
+        listingId: lead.listing_id,
+        guestName: lead.name,
+        guestEmail: lead.email,
+        guestPhone: lead.phone ?? null,
+        checkIn: lead.check_in,
+        checkOut: lead.check_out,
+        nights: lead.nights ?? 1,
+        guests: lead.num_guests ?? 1,
+        totalPrice: captureResult.amount ?? lead.total_amount ?? 0,
+        cleaningFee: lead.cleaning_fee ?? 0,
+        reference: lead.reference ?? orderId,
+        paypalCaptureId: captureResult.captureId ?? '',
+        paypalOrderId: orderId,
+      }).catch(err => {
+        console.error('[capture] Hostaway push failed (non-fatal):', err)
+        return { ok: false, error: String(err) }
+      })
+
+    if (hostawayResult.ok) {
+      // Store Hostaway reservation ID in lead for cross-reference
+      await fetch(
+        `${SUPABASE_URL}/rest/v1/leads?id=eq.${encodeURIComponent(lead.id)}`,
+        {
+          method: 'PATCH',
+          headers: {
+            apikey: SERVICE_KEY,
+            Authorization: `Bearer ${SERVICE_KEY}`,
+            'Content-Type': 'application/json',
+            Prefer: 'return=minimal',
+          },
+          body: JSON.stringify({
+            hostaway_reservation_id: hostawayResult.hostawayReservationId,
+          }),
+        }
+      ).catch(err => console.error('[capture] Failed to store hostaway_reservation_id:', err))
+      console.log('[capture] Hostaway reservation created:', hostawayResult.hostawayReservationId)
+    } else {
+      // Log urgently — calendar not blocked, needs manual intervention
+      console.error(
+        `[capture] ⚠️ HOSTAWAY PUSH FAILED for lead ${lead.id} (${lead.reference}) — calendar NOT blocked! Error: ${hostawayResult.error}`
+      )
+    }
+
     // --- Send confirmation email (non-blocking) ---
     sendPaymentConfirmationEmail({
       guestEmail: lead.email,
@@ -259,6 +308,8 @@ export async function POST(req: NextRequest) {
       success: true,
       reference: lead.reference,
       captureId: captureResult.captureId,
+      hostawayReservationId: hostawayResult.ok ? hostawayResult.hostawayReservationId : null,
+      calendarBlocked: hostawayResult.ok,
     })
   } catch (err) {
     console.error('[capture] Unhandled error:', err)
