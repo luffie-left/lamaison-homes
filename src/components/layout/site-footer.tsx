@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 
 import { siteConfig } from "@/lib/site";
@@ -7,7 +8,13 @@ export function SiteFooter() {
     <footer className="border-t border-black/5 bg-stone-950 text-stone-200">
       <div className="mx-auto grid max-w-7xl gap-12 px-4 py-16 sm:px-6 lg:grid-cols-[1.4fr_repeat(4,1fr)] lg:px-8">
         <div className="space-y-4">
-          <p className="text-xs uppercase tracking-[0.3em] text-stone-400">La Maison Homes</p>
+          <Image
+            src="/logo.png"
+            alt="La Maison Homes"
+            height={48}
+            width={192}
+            className="h-12 w-auto object-contain"
+          />
           <h2 className="max-w-sm text-2xl font-medium leading-tight text-stone-50">
             Curated Melbourne stays with hotel-grade care.
           </h2>

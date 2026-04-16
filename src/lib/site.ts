@@ -1,8 +1,8 @@
 export const siteConfig = {
-  name: "La Maison Homes",
+  name: "La Maison Homes — The right place for you",
   shortName: "La Maison",
   description:
-    "Curated Melbourne stays with hotel-grade care. Beautifully selected homes. Seamless guest stays. Professional short-stay management.",
+    "La Maison Homes — The right place for you. Curated Melbourne stays with hotel-grade care. Beautifully selected homes. Seamless guest stays. Professional short-stay management.",
   url: process.env.NEXT_PUBLIC_SITE_URL || "https://lamaisonhomes.com.au",
   ogImage: "/placeholders/home-hero-fallback.jpg",
   email: "bookings@lamaisonhomes.com.au",
