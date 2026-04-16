@@ -20,9 +20,9 @@ export function SiteHeader() {
           <Image
             src="/logo-transparent.png"
             alt="La Maison Homes"
-            height={48}
-            width={192}
-            className="h-12 w-auto object-contain"
+            height={64}
+            width={256}
+            className="h-16 w-auto object-contain"
             priority
           />
         </Link>

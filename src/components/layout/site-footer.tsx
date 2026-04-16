@@ -11,9 +11,9 @@ export function SiteFooter() {
           <Image
             src="/logo-transparent.png"
             alt="La Maison Homes"
-            height={48}
-            width={192}
-            className="h-12 w-auto object-contain"
+            height={64}
+            width={256}
+            className="h-16 w-auto object-contain"
           />
           <h2 className="max-w-sm text-2xl font-medium leading-tight text-stone-50">
             Curated Melbourne stays with hotel-grade care.
