@@ -16,16 +16,19 @@ export function SiteHeader() {
   return (
     <header className="sticky top-0 z-50 border-b border-black/5 bg-[rgba(247,242,235,0.88)] backdrop-blur-xl">
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-6 px-4 py-4 sm:px-6 lg:px-8">
-        <Link href="/" onClick={() => setMenuOpen(false)}>
-          <Image
-            src="/logo-transparent.png"
-            alt="La Maison Homes"
-            height={64}
-            width={256}
-            className="h-16 w-auto object-contain"
-            priority
-          />
-        </Link>
+        {/* Logo — centred on mobile, left-aligned on desktop */}
+        <div className="flex flex-1 lg:flex-none justify-center lg:justify-start">
+          <Link href="/" onClick={() => setMenuOpen(false)}>
+            <Image
+              src="/logo-transparent.png"
+              alt="La Maison Homes"
+              height={128}
+              width={512}
+              className="h-32 w-auto object-contain"
+              priority
+            />
+          </Link>
+        </div>
 
         {/* Desktop nav */}
         <nav className="hidden items-center gap-6 lg:flex">
