@@ -22,7 +22,7 @@ export function SiteHeader() {
             alt="La Maison Homes"
             height={48}
             width={192}
-            className="h-12 w-auto object-contain mix-blend-multiply"
+            className="h-12 w-auto object-contain"
             priority
           />
         </Link>
