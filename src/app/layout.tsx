@@ -4,6 +4,7 @@ import { Fraunces, Inter } from "next/font/google";
 import "./globals.css";
 
 import { PageShell } from "@/components/layout/page-shell";
+import { VoiceButton } from "@/components/voice/VoiceButton";
 import { siteConfig } from "@/lib/site";
 import { absoluteUrl } from "@/lib/utils";
 
@@ -50,6 +51,7 @@ export default function RootLayout({
     <html lang="en" className={`${inter.variable} ${fraunces.variable}`}>
       <body className="font-sans antialiased">
         <PageShell>{children}</PageShell>
+        <VoiceButton />
       </body>
     </html>
   );
