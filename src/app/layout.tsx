@@ -5,6 +5,7 @@ import "./globals.css";
 
 import { PageShell } from "@/components/layout/page-shell";
 import { VoiceButton } from "@/components/voice/VoiceButton";
+import ConciergeChat from "@/components/ConciergeChat";
 import { siteConfig } from "@/lib/site";
 import { absoluteUrl } from "@/lib/utils";
 
@@ -52,6 +53,7 @@ export default function RootLayout({
       <body className="font-sans antialiased">
         <PageShell>{children}</PageShell>
         <VoiceButton />
+        <ConciergeChat />
       </body>
     </html>
   );
