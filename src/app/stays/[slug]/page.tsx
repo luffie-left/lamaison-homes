@@ -38,7 +38,7 @@ export const dynamic = "force-dynamic";
 
 async function getStay(slug: string): Promise<Property | null> {
   try {
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+    const appUrl = (process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000").replace(/\n/g, "").trim();
     const res = await fetch(`${appUrl}/api/stays/${slug}`, {
       next: { revalidate: 300 },
     });
@@ -52,7 +52,7 @@ async function getStay(slug: string): Promise<Property | null> {
 
 async function getSimilarStays(currentSlug: string): Promise<Property[]> {
   try {
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+    const appUrl = (process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000").replace(/\n/g, "").trim();
     const res = await fetch(`${appUrl}/api/stays`, {
       next: { revalidate: 300 },
     });

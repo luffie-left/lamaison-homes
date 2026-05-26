@@ -150,7 +150,9 @@ export function PropertyBookingSection({
   const fetchAvailability = useCallback(async () => {
     try {
       setCalLoading(true);
-      const res = await fetch(`/api/stays/${slug}/availability`);
+      // Use listingId (numeric Hostaway ID) for availability — slug may be text
+      const availSlug = listingId ?? slug;
+      const res = await fetch(`/api/stays/${availSlug}/availability`);
       if (!res.ok) return;
       const data = await res.json();
       setBlockedDates(new Set(data.blockedDates ?? []));

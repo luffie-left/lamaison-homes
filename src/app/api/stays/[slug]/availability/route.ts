@@ -1,35 +1,24 @@
 import { NextRequest, NextResponse } from "next/server";
-import {
-  hostawayGet,
-  type HostawayCalendarResponse,
-} from "@/lib/hostaway";
+import { hostawayGet, type HostawayCalendarResponse } from "@/lib/hostaway";
 
 export const revalidate = 0; // Always fresh for availability
 
-const SUPABASE_URL = (process.env.NEXT_PUBLIC_SUPABASE_URL ?? "").replace(
-  /\n/g,
-  ""
-);
-const SERVICE_KEY = (process.env.SUPABASE_SERVICE_ROLE_KEY ?? "").replace(
-  /\n/g,
-  ""
-);
+const SUPABASE_URL = (process.env.NEXT_PUBLIC_SUPABASE_URL ?? "").replace(/\n/g, "").trim();
+const SERVICE_KEY = (process.env.SUPABASE_SERVICE_ROLE_KEY ?? "").replace(/\n/g, "").trim();
 
 const fmt = (d: Date): string => d.toISOString().split("T")[0];
 
-async function getBlockedDatesFromSupabase(
-  slug: string,
-  startDate: string,
-  endDate: string
-): Promise<string[] | null> {
-  if (!SUPABASE_URL || !SERVICE_KEY) return null;
+// ─── Resolve text slug → Hostaway listing ID via Supabase ─────────────────────
 
-  // Look up the listing id from the slug (which IS the hostaway_listing_id as string)
-  if (isNaN(Number(slug))) return null;
+async function resolveListingId(slug: string): Promise<number | null> {
+  // Numeric slug is already the listing ID
+  if (!isNaN(Number(slug))) return Number(slug);
+
+  if (!SUPABASE_URL || !SERVICE_KEY) return null;
 
   try {
     const res = await fetch(
-      `${SUPABASE_URL}/rest/v1/calendar_blocks?hostaway_listing_id=eq.${slug}&date=gte.${startDate}&date=lte.${endDate}&status=neq.available&select=date`,
+      `${SUPABASE_URL}/rest/v1/properties?slug=eq.${encodeURIComponent(slug)}&select=hostaway_listing_id&limit=1`,
       {
         headers: {
           apikey: SERVICE_KEY,
@@ -38,22 +27,43 @@ async function getBlockedDatesFromSupabase(
         cache: "no-store",
       }
     );
-
     if (!res.ok) return null;
+    const rows = await res.json();
+    return rows?.[0]?.hostaway_listing_id ?? null;
+  } catch {
+    return null;
+  }
+}
 
+// ─── Blocked dates from Supabase calendar_blocks ──────────────────────────────
+
+async function getBlockedDatesFromSupabase(
+  listingId: number,
+  startDate: string,
+  endDate: string
+): Promise<string[] | null> {
+  if (!SUPABASE_URL || !SERVICE_KEY) return null;
+  try {
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/calendar_blocks?hostaway_listing_id=eq.${listingId}&date=gte.${startDate}&date=lte.${endDate}&status=neq.available&select=date`,
+      {
+        headers: {
+          apikey: SERVICE_KEY,
+          Authorization: `Bearer ${SERVICE_KEY}`,
+        },
+        cache: "no-store",
+      }
+    );
+    if (!res.ok) return null;
     const data = await res.json();
-
-    if (!Array.isArray(data) || data.length === 0) {
-      // Empty could mean: no blocks (all available) OR table not synced yet
-      // We can't tell the difference, so we fall through to Hostaway
-      return null;
-    }
-
+    if (!Array.isArray(data) || data.length === 0) return null;
     return data.map((d: { date: string }) => d.date);
   } catch {
     return null;
   }
 }
+
+// ─── Route handler ────────────────────────────────────────────────────────────
 
 export async function GET(
   req: NextRequest,
@@ -61,39 +71,41 @@ export async function GET(
 ) {
   const { slug } = await params;
 
-  if (!slug || isNaN(Number(slug))) {
-    return NextResponse.json({ error: "Invalid listing ID" }, { status: 400 });
+  if (!slug) {
+    return NextResponse.json({ error: "Missing slug" }, { status: 400 });
   }
 
   const today = new Date();
   const endDate = new Date(today);
   endDate.setDate(today.getDate() + 90);
-
   const startStr = fmt(today);
   const endStr = fmt(endDate);
 
   try {
-    // Priority 1: Check Supabase calendar_blocks
-    const supabaseBlocked = await getBlockedDatesFromSupabase(
-      slug,
-      startStr,
-      endStr
-    );
+    // Resolve the listing ID (handles both numeric and text slugs)
+    const listingId = await resolveListingId(slug);
+
+    if (!listingId) {
+      return NextResponse.json(
+        { error: "Property not found", available: false, blockedDates: [] },
+        { status: 404 }
+      );
+    }
 
     let blockedDates: string[];
 
+    // Priority 1: Supabase calendar_blocks
+    const supabaseBlocked = await getBlockedDatesFromSupabase(listingId, startStr, endStr);
+
     if (supabaseBlocked !== null) {
-      // Supabase has data — use it
       blockedDates = supabaseBlocked;
     } else {
-      // Fallback: fetch directly from Hostaway
+      // Fallback: Hostaway calendar API
       const data = await hostawayGet<HostawayCalendarResponse>(
-        `/listings/${slug}/calendar?startDate=${startStr}&endDate=${endStr}`,
-        0 // no cache for availability
+        `/listings/${listingId}/calendar?startDate=${startStr}&endDate=${endStr}`,
+        0
       );
-
       const entries = data?.result ?? [];
-
       blockedDates = entries
         .filter(
           (e) =>
@@ -104,7 +116,7 @@ export async function GET(
         .map((e) => e.date);
     }
 
-    // Check if requested dates (if any) are available
+    // Optional: check specific dates from query params
     const searchParams = req.nextUrl.searchParams;
     const checkIn = searchParams.get("checkIn");
     const checkOut = searchParams.get("checkOut");
@@ -123,15 +135,11 @@ export async function GET(
       }
     }
 
-    return NextResponse.json({ available, blockedDates });
+    return NextResponse.json({ available, blockedDates, listingId });
   } catch (err) {
     console.error(`[/api/stays/${slug}/availability] Error:`, err);
     return NextResponse.json(
-      {
-        error: "Failed to fetch availability",
-        available: false,
-        blockedDates: [],
-      },
+      { error: "Failed to fetch availability", available: false, blockedDates: [] },
       { status: 500 }
     );
   }
