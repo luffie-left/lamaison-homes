@@ -122,19 +122,32 @@ async function getFromSupabase(): Promise<Property[] | null> {
   }
 }
 
-// Raw Hostaway listings with images — keyed by listing ID
-async function getHostawayImageMap(): Promise<Map<number, { hero: string; gallery: string[] }>> {
+// Hostaway listing data keyed by listing ID — images + live pricing
+interface HostawayListingData {
+  hero: string;
+  gallery: string[];
+  price: number;
+  cleaningFee: number;
+  lat?: number;
+  lng?: number;
+}
+
+async function getHostawayListingMap(): Promise<Map<number, HostawayListingData>> {
   try {
     const data = await hostawayGet<HostawayListingsResponse>(
       "/listings?limit=100&includeResources=1",
       300
     );
-    const map = new Map<number, { hero: string; gallery: string[] }>();
+    const map = new Map<number, HostawayListingData>();
     for (const l of data?.result ?? []) {
       const sorted = (l.listingImages ?? []).sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
       map.set(l.id, {
         hero: sorted[0]?.url ?? "",
         gallery: sorted.slice(0, 8).map(i => i.url),
+        price: l.price ?? 0,
+        cleaningFee: l.cleaningFee ?? 0,
+        lat: l.lat,
+        lng: l.lng,
       });
     }
     return map;
@@ -164,20 +177,30 @@ async function getFromHostaway(): Promise<Property[]> {
 
 export async function GET() {
   try {
-    // Fetch Supabase properties + Hostaway images in parallel
-    const [supabaseStays, hostawayImages] = await Promise.all([
+    // Fetch Supabase properties + Hostaway listing data (images + prices) in parallel
+    const [supabaseStays, hostawayMap] = await Promise.all([
       getFromSupabase(),
-      getHostawayImageMap(),
+      getHostawayListingMap(),
     ]);
 
     if (supabaseStays !== null) {
-      // Merge Hostaway images into Supabase properties (photos column is empty)
+      // Merge Hostaway images + live pricing into Supabase properties
       const merged = supabaseStays.map(stay => {
-        if (stay.heroImage && stay.gallery.length > 0) return stay; // already has photos
         if (!stay.listingId) return stay;
-        const imgs = hostawayImages.get(stay.listingId);
-        if (!imgs) return stay;
-        return { ...stay, heroImage: imgs.hero, gallery: imgs.gallery };
+        const ha = hostawayMap.get(stay.listingId);
+        if (!ha) return stay;
+        return {
+          ...stay,
+          // Images: use Hostaway when Supabase photos are empty
+          heroImage: stay.heroImage || ha.hero,
+          gallery: stay.gallery.length ? stay.gallery : ha.gallery,
+          // Pricing: use Hostaway live price when Supabase has null/0
+          startingPrice: stay.startingPrice > 0 ? stay.startingPrice : ha.price,
+          cleaningFee: stay.cleaningFee > 0 ? stay.cleaningFee : ha.cleaningFee,
+          // Coordinates: fill from Hostaway
+          lat: (stay as any).lat ?? ha.lat,
+          lng: (stay as any).lng ?? ha.lng,
+        };
       });
 
       return NextResponse.json({

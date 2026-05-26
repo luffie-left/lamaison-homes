@@ -48,7 +48,11 @@ export function PropertyCard({ property, className }: { property: Property; clas
         <div className="flex items-center justify-between pt-2">
           <div>
             <p className="text-xs uppercase tracking-[0.2em] text-stone-500">From</p>
-            <p className="text-lg font-medium text-stone-950">{formatCurrency(property.startingPrice)}<span className="text-sm text-stone-500"> / night</span></p>
+            <p className="text-lg font-medium text-stone-950">
+              {property.startingPrice > 0
+                ? <>{formatCurrency(property.startingPrice)}<span className="text-sm text-stone-500"> / night</span></>
+                : <span className="text-sm text-stone-400">Price on request</span>}
+            </p>
           </div>
           <Link
             href={`/stays/${property.slug}`}

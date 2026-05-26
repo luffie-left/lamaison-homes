@@ -149,11 +149,16 @@ export async function GET(
               stay: {
                 ...hostawayStay,
                 slug: stay.slug,
+                // Images: prefer Supabase if populated, else Hostaway
                 heroImage: stay.heroImage || hostawayStay.heroImage,
                 gallery: stay.gallery.length ? stay.gallery : hostawayStay.gallery,
+                // Descriptions: prefer Supabase if populated
                 descriptionLong: stay.descriptionLong || hostawayStay.descriptionLong,
                 descriptionShort: stay.descriptionShort || hostawayStay.descriptionShort,
                 houseRules: stay.houseRules.length ? stay.houseRules : hostawayStay.houseRules,
+                // Pricing: always take live Hostaway price
+                startingPrice: hostawayStay.startingPrice || stay.startingPrice,
+                cleaningFee: hostawayStay.cleaningFee ?? stay.cleaningFee,
                 luxuryTier: stay.luxuryTier,
               },
             });
