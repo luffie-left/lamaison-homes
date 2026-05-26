@@ -7,13 +7,23 @@ import { cn, formatCurrency } from "@/lib/utils";
 export function PropertyCard({ property, className }: { property: Property; className?: string }) {
   return (
     <article className={cn("group overflow-hidden rounded-[28px] border border-black/5 bg-white shadow-[0_20px_60px_rgba(15,23,42,0.06)]", className)}>
-      <div className="relative aspect-[4/3] overflow-hidden">
-        <Image
-          src={property.heroImage}
-          alt={property.title}
-          fill
-          className="object-cover transition duration-700 group-hover:scale-105"
-        />
+      <div className="relative aspect-[4/3] overflow-hidden bg-stone-100">
+        {property.heroImage ? (
+          <Image
+            src={property.heroImage}
+            alt={property.title}
+            fill
+            className="object-cover transition duration-700 group-hover:scale-105"
+            unoptimized={property.heroImage.includes('hostaway-platform.s3')}
+          />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center">
+            <svg className="h-12 w-12 text-stone-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 22V12h6v10" />
+            </svg>
+          </div>
+        )}
         {property.luxuryTier && (
           <div className="absolute left-4 top-4 rounded-full bg-[#f7f2eb]/90 px-3 py-1 text-xs uppercase tracking-[0.2em] text-stone-700">
             {property.luxuryTier}

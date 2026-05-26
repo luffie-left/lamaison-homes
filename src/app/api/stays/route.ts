@@ -122,6 +122,27 @@ async function getFromSupabase(): Promise<Property[] | null> {
   }
 }
 
+// Raw Hostaway listings with images — keyed by listing ID
+async function getHostawayImageMap(): Promise<Map<number, { hero: string; gallery: string[] }>> {
+  try {
+    const data = await hostawayGet<HostawayListingsResponse>(
+      "/listings?limit=100&includeResources=1",
+      300
+    );
+    const map = new Map<number, { hero: string; gallery: string[] }>();
+    for (const l of data?.result ?? []) {
+      const sorted = (l.listingImages ?? []).sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
+      map.set(l.id, {
+        hero: sorted[0]?.url ?? "",
+        gallery: sorted.slice(0, 8).map(i => i.url),
+      });
+    }
+    return map;
+  } catch {
+    return new Map();
+  }
+}
+
 async function getFromHostaway(): Promise<Property[]> {
   const data = await hostawayGet<HostawayListingsResponse>(
     "/listings?limit=100&includeResources=1"
@@ -143,17 +164,30 @@ async function getFromHostaway(): Promise<Property[]> {
 
 export async function GET() {
   try {
-    // Priority 1: Supabase published properties (respects publish control)
-    const supabaseStays = await getFromSupabase();
+    // Fetch Supabase properties + Hostaway images in parallel
+    const [supabaseStays, hostawayImages] = await Promise.all([
+      getFromSupabase(),
+      getHostawayImageMap(),
+    ]);
+
     if (supabaseStays !== null) {
+      // Merge Hostaway images into Supabase properties (photos column is empty)
+      const merged = supabaseStays.map(stay => {
+        if (stay.heroImage && stay.gallery.length > 0) return stay; // already has photos
+        if (!stay.listingId) return stay;
+        const imgs = hostawayImages.get(stay.listingId);
+        if (!imgs) return stay;
+        return { ...stay, heroImage: imgs.hero, gallery: imgs.gallery };
+      });
+
       return NextResponse.json({
-        stays: supabaseStays,
-        total: supabaseStays.length,
-        source: "supabase",
+        stays: merged,
+        total: merged.length,
+        source: "supabase+hostaway",
       });
     }
 
-    // Priority 2: Hostaway API direct (fallback — site works before sync runs)
+    // Fallback: Hostaway direct (Supabase empty or unreachable)
     const hostawayStays = await getFromHostaway();
     return NextResponse.json({
       stays: hostawayStays,
