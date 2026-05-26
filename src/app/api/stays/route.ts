@@ -196,7 +196,7 @@ export async function GET() {
           gallery: stay.gallery.length ? stay.gallery : ha.gallery,
           // Pricing: use Hostaway live price when Supabase has null/0
           startingPrice: stay.startingPrice > 0 ? stay.startingPrice : ha.price,
-          cleaningFee: stay.cleaningFee > 0 ? stay.cleaningFee : ha.cleaningFee,
+          cleaningFee: (stay.cleaningFee ?? 0) > 0 ? stay.cleaningFee : ha.cleaningFee,
           // Coordinates: fill from Hostaway
           lat: (stay as any).lat ?? ha.lat,
           lng: (stay as any).lng ?? ha.lng,

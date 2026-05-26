@@ -158,7 +158,7 @@ export async function GET(
                 houseRules: stay.houseRules.length ? stay.houseRules : hostawayStay.houseRules,
                 // Pricing: always take live Hostaway price
                 startingPrice: hostawayStay.startingPrice || stay.startingPrice,
-                cleaningFee: hostawayStay.cleaningFee ?? stay.cleaningFee,
+                cleaningFee: hostawayStay.cleaningFee ?? stay.cleaningFee ?? 0,
                 luxuryTier: stay.luxuryTier,
               },
             });
