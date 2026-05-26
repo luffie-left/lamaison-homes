@@ -30,8 +30,9 @@
 // TODO: add to Vercel / Railway env vars
 const DEEPGRAM_API_KEY = process.env.DEEPGRAM_API_KEY as string
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY as string       // already set
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL as string
-const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY as string
+// Read at request time (not module load) to avoid cold-start env issues
+const getSupabaseUrl = () => (process.env.NEXT_PUBLIC_SUPABASE_URL ?? '').replace(/\n/g, '').trim()
+const getSupabaseKey = () => (process.env.SUPABASE_SERVICE_ROLE_KEY ?? '').replace(/\n/g, '').trim()
 
 import { NextRequest } from 'next/server'
 import WebSocket from 'ws'
@@ -62,7 +63,7 @@ interface CallSession {
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function createSupabaseClient() {
-  return createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY)
+  return createClient(getSupabaseUrl(), getSupabaseKey())
 }
 
 async function saveCallLog(session: CallSession) {

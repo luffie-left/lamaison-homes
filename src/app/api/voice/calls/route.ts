@@ -15,12 +15,16 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL as string,
-  process.env.SUPABASE_SERVICE_ROLE_KEY as string
-)
+// Lazy-init: create inside handler so env vars are read at request time, not module load
+function getSupabase() {
+  const url = (process.env.NEXT_PUBLIC_SUPABASE_URL ?? '').replace(/\n/g, '').trim()
+  const key = (process.env.SUPABASE_SERVICE_ROLE_KEY ?? '').replace(/\n/g, '').trim()
+  if (!url || !key) throw new Error('Supabase env vars not configured')
+  return createClient(url, key)
+}
 
 export async function GET(req: NextRequest) {
+  const supabase = getSupabase()
   const { searchParams } = req.nextUrl
 
   const id = searchParams.get('id')
