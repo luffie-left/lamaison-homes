@@ -43,7 +43,7 @@ export async function POST(req: NextRequest) {
         apikey: SERVICE_KEY,
         Authorization: `Bearer ${SERVICE_KEY}`,
         "Content-Type": "application/json",
-        Prefer: "return=representation",
+        Prefer: "return=representation", // return the inserted row so we can read its id
       },
       body: JSON.stringify({
         name,
@@ -102,10 +102,18 @@ export async function POST(req: NextRequest) {
       }),
     ]);
 
+    // Extract Supabase-generated row id to return to the client
+    let leadId: string | null = null;
+    try {
+      const inserted = await insertRes.json();
+      leadId = Array.isArray(inserted) ? inserted[0]?.id : inserted?.id ?? null;
+    } catch { /* non-fatal */ }
+
     return NextResponse.json({
       success: true,
       reference,
       portalToken,
+      leadId,
       message: "We'll confirm your booking within 2 hours",
     });
   } catch (err) {

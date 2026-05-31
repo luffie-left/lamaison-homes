@@ -40,17 +40,46 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const data = await hostawayGet<HostawayListingResponse>(
-      `/listings/${listingId}?includeResources=1`
-    );
+    // Fetch listing details + availability in parallel
+    const [data, availRes] = await Promise.allSettled([
+      hostawayGet<HostawayListingResponse>(`/listings/${listingId}?includeResources=1`),
+      hostawayGet<{ result: Array<{ date: string; isAvailable: number; status: string; minimumStay?: number }> }>(
+        `/listings/${listingId}/calendar?startDate=${checkIn}&endDate=${checkOut}`,
+        0 // no cache for availability
+      ),
+    ]);
 
-    if (!data?.result) {
+    if (data.status === 'rejected' || !data.value?.result) {
       return NextResponse.json({ error: "Listing not found" }, { status: 404 });
     }
 
-    const listing = data.result;
+    const listing = data.value.result;
     const nightlyRate = listing.price ?? 0;
     const cleaningFee = listing.cleaningFee ?? 0;
+    const minStay = listing.minimumStay ?? 1;
+
+    // Minimum stay validation
+    if (nights < minStay) {
+      return NextResponse.json(
+        { error: `Minimum stay is ${minStay} night${minStay !== 1 ? 's' : ''} for this property.`, minStay },
+        { status: 400 }
+      );
+    }
+
+    // Availability check from calendar
+    if (availRes.status === 'fulfilled' && availRes.value?.result) {
+      const calEntries = availRes.value.result;
+      const blockedEntry = calEntries.find(
+        (e) => e.isAvailable === 0 || e.status === 'blocked' || e.status === 'reserved'
+      );
+      if (blockedEntry) {
+        return NextResponse.json(
+          { error: "These dates are not available. Please choose different dates.", blocked: true },
+          { status: 409 }
+        );
+      }
+    }
+
     const subtotal = nights * nightlyRate + cleaningFee;
 
     return NextResponse.json({
@@ -60,6 +89,7 @@ export async function GET(req: NextRequest) {
       subtotal,
       currency: "AUD",
       guests,
+      minStay,
     });
   } catch (err) {
     console.error("[/api/quote] Error:", err);
