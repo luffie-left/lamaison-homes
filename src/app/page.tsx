@@ -27,32 +27,32 @@ const guestPromiseCards = [
   {
     title: "Professionally Managed",
     description: "Every home is managed to a professional short-stay standard — inspected, prepared, and maintained for guest-ready arrival every time.",
-    image: "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800&q=80",
+    image: "/images/guest-professionally-managed.jpg",
   },
   {
     title: "Carefully Selected",
     description: "Only homes that meet our design, quality, and comfort criteria make it into the La Maison collection.",
-    image: "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80",
+    image: "/images/guest-carefully-selected.jpg",
   },
   {
     title: "Verified Home Details",
     description: "What you see is what you get. Accurate photos, honest descriptions, and no surprises on arrival.",
-    image: "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=800&q=80",
+    image: "/images/guest-verified-details.jpg",
   },
   {
     title: "Guest Support",
     description: "Melbourne-based support available before, during, and after your stay. Real people, real help.",
-    image: "https://images.unsplash.com/photo-1553877522-43269d4ea984?w=800&q=80",
+    image: "/images/guest-guest-support.jpg",
   },
   {
     title: "Cleaning Standards",
     description: "Hotel-grade cleaning and linen standards between every stay. Fresh, clean, and ready on arrival.",
-    image: "https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=800&q=80",
+    image: "/images/guest-cleaning-standards.jpg",
   },
   {
     title: "Secure Booking",
     description: "Book direct with confidence. Transparent pricing, clear terms, and a booking experience built on trust.",
-    image: "https://images.unsplash.com/photo-1563013544-824ae1b704d3?w=800&q=80",
+    image: "/images/guest-secure-booking.jpg",
   },
 ];
 
@@ -92,7 +92,28 @@ const hostServices = [
   "Furnishing / styling advisory",
 ];
 
-const ownerSteps = ["Consult", "Onboard", "Launch", "Manage", "Report / optimise"];
+const ownerSteps = [
+  {
+    title: "Consult",
+    body: "We begin with a complimentary property assessment to understand your home, your goals, and how short-stay management fits your circumstances. We review location potential, interior presentation, and revenue expectations together.",
+  },
+  {
+    title: "Onboard",
+    body: "Our team coordinates professional photography, listing creation, and pricing strategy across all major booking channels. We handle setup across Airbnb, Booking.com, and direct booking platforms with optimised positioning.",
+  },
+  {
+    title: "Launch",
+    body: "Your property goes live with a tailored launch plan designed to build early visibility and strong initial reviews. We manage the first guest bookings with extra attention to establish momentum quickly.",
+  },
+  {
+    title: "Manage",
+    body: "Day-to-day operations are handled entirely by our team — guest communication, check-in coordination, cleaning scheduling, maintenance oversight, and 24/7 support. You stay informed without being involved.",
+  },
+  {
+    title: "Report & Optimise",
+    body: "Receive clear monthly reports covering occupancy, revenue, guest feedback, and operational updates. We continuously adjust pricing and presentation to maximise returns throughout the year.",
+  },
+];
 
 async function getFeaturedStays(): Promise<Property[]> {
   try {
@@ -114,7 +135,7 @@ export default async function Home() {
     <div>
       <section className="relative overflow-hidden">
         <div className="absolute inset-0">
-          <Image src="/placeholders/home-hero-fallback.jpg" alt="La Maison Homes hero" fill className="object-cover" priority />
+          <Image src="/images/hero-bg.jpg" alt="La Maison Homes hero" fill className="object-cover" priority />
           <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(20,18,16,0.42),rgba(20,18,16,0.76))]" />
         </div>
         <div className="relative mx-auto flex min-h-[82vh] max-w-7xl flex-col justify-center px-4 py-24 sm:px-6 lg:px-8">
@@ -175,7 +196,7 @@ export default async function Home() {
 
       <section className="mx-auto grid max-w-7xl gap-10 px-4 py-20 sm:px-6 lg:grid-cols-[1.05fr_0.95fr] lg:px-8">
         <div className="relative min-h-[460px] overflow-hidden rounded-[36px]">
-          <Image src="/placeholders/melbourne-neighbourhood.jpg" alt="Why guests book with La Maison Homes" fill className="object-cover" />
+          <Image src="/images/why-book-with-us.jpg" alt="Why guests book with La Maison Homes" fill className="object-cover" />
         </div>
         <div className="flex items-center">
           <div className="space-y-6">
@@ -218,7 +239,7 @@ export default async function Home() {
           </Link>
         </div>
         <div className="relative min-h-[420px] overflow-hidden rounded-[36px]">
-          <Image src="/placeholders/concierge-dining.jpg" alt="Concierge experience" fill className="object-cover" />
+          <Image src="/images/concierge.jpg" alt="Concierge experience" fill className="object-cover" />
         </div>
       </section>
 
@@ -275,7 +296,7 @@ export default async function Home() {
             </Link>
           </div>
           <div className="relative min-h-[360px] overflow-hidden rounded-[30px]">
-            <Image src="/placeholders/hosting-owner-hero.jpg" alt="Host with us" fill className="object-cover" />
+            <Image src="/images/why-host-with-us.jpg" alt="Host with us" fill className="object-cover" />
           </div>
         </div>
       </section>
@@ -288,10 +309,10 @@ export default async function Home() {
         />
         <div className="mt-8 grid gap-5 md:grid-cols-2 xl:grid-cols-5">
           {ownerSteps.map((step, index) => (
-            <div key={step} className="rounded-[28px] bg-white p-6 shadow-[0_20px_60px_rgba(15,23,42,0.04)]">
+            <div key={step.title} className="rounded-[28px] bg-white p-6 shadow-[0_20px_60px_rgba(15,23,42,0.04)]">
               <p className="text-xs uppercase tracking-[0.28em] text-stone-500">Step {index + 1}</p>
-              <h3 className="mt-4 text-lg font-medium text-stone-950">{step}</h3>
-              <p className="mt-2 text-sm leading-6 text-stone-600">Owner process content block designed to keep management setup and reporting feel structured and professional.</p>
+              <h3 className="mt-4 text-lg font-medium text-stone-950">{step.title}</h3>
+              <p className="mt-2 text-sm leading-6 text-stone-600">{step.body}</p>
             </div>
           ))}
         </div>

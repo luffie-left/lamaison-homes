@@ -223,7 +223,7 @@ export const journalPosts = [
     category: "Melbourne Guides",
     excerpt:
       "A considered guide to neighbourhoods that suit dining weekends, gallery stops, and slower city escapes.",
-    image: "/placeholders/journal-melbourne-guide.jpg",
+    image: "/images/guide-weekend-suburbs.jpg",
   },
   {
     slug: "family-friendly-stays-across-melbourne",
@@ -231,7 +231,7 @@ export const journalPosts = [
     category: "Stay Inspiration",
     excerpt:
       "Where extra space, practical layout, and local convenience matter most.",
-    image: "/placeholders/melbourne-neighbourhood.jpg",
+    image: "/images/guide-family-stays.jpg",
   },
   {
     slug: "what-owners-should-know-before-starting-short-stay-management",
@@ -239,7 +239,7 @@ export const journalPosts = [
     category: "Owner Advice",
     excerpt:
       "The operational foundations behind stronger revenue, lower friction, and a better guest experience.",
-    image: "/placeholders/hosting-owner-hero.jpg",
+    image: "/images/guide-owner-advice.jpg",
   },
 ];
 
