@@ -89,7 +89,7 @@ const hostServices = [
   "Cleaning turnover",
   "Maintenance",
   "Owner reporting",
-  "Furnishing / Styling Procurement",
+  "Furniture / Styling Procurement",
 ];
 
 const ownerSteps = [
