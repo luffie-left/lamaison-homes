@@ -246,47 +246,100 @@ export const journalPosts = [
 export const faqItems = {
   guests: [
     {
-      question: "Do you offer direct booking support?",
+      question: "How do I make a booking?",
       answer:
-        "Yes. We support direct enquiries and can route guests into a secure booking handoff flow as the platform evolves.",
+        "Browse our stays, select your property, and submit a booking enquiry directly through our website. We'll confirm availability, send a payment link, and issue your booking confirmation — typically within a few hours.",
     },
     {
-      question: "Can concierge services be arranged before arrival?",
+      question: "How does check-in work?",
       answer:
-        "Yes. Airport transfers, celebration setup, family extras, and local recommendations can be requested in advance.",
+        "Most properties use a secure key safe or smart lock. You'll receive full check-in instructions — including access codes and property directions — by email and SMS at least 24 hours before your arrival. Check-in is from 3pm unless an early check-in has been arranged.",
+    },
+    {
+      question: "What support is available during my stay?",
+      answer:
+        "Our guest support team is reachable throughout your stay. If something isn't right, contact us and we'll respond promptly. For non-urgent matters, email is fine. For urgent issues during your stay, use the contact number provided in your welcome message.",
+    },
+    {
+      question: "What is your cancellation policy?",
+      answer:
+        "Cancellations made 14 or more days before check-in are eligible for a full refund. Cancellations between 7 and 14 days receive a 50% refund. Cancellations within 7 days of check-in are non-refundable. Full terms are available on our Booking Terms page.",
+    },
+    {
+      question: "Can I arrange concierge services before I arrive?",
+      answer:
+        "Yes. Airport transfers, mid-stay cleaning, baby equipment, celebration setup, and local recommendations can all be arranged before or during your stay. Submit a concierge request through our website and we'll take care of the rest.",
     },
   ],
   owners: [
     {
-      question: "What kind of properties do you work with?",
+      question: "What does your management fee cover?",
       answer:
-        "We focus on distinctive homes and apartments that align with our presentation, guest standard, and location criteria.",
+        "Our management fee covers listing setup, channel distribution, dynamic pricing, guest communication, check-in coordination, cleaning turnover, and monthly performance reporting. A full service breakdown is provided during your property assessment.",
     },
     {
-      question: "Do you manage pricing and guest communication?",
+      question: "How does onboarding work?",
       answer:
-        "Yes. Revenue optimisation, guest messaging, cleaning coordination, and owner reporting are part of the management proposition.",
+        "We begin with a property assessment to confirm fit, location, and commercial potential. Once accepted, we coordinate photography, write listing copy, configure pricing, and prepare the property for guest readiness. Most properties launch within two to three weeks of onboarding.",
+    },
+    {
+      question: "How do I track performance and income?",
+      answer:
+        "You receive a monthly owner report covering occupancy, revenue, guest reviews, and key operational notes. We aim for full transparency — no surprises on statements and no unexplained deductions.",
+    },
+    {
+      question: "How do you manage guest quality?",
+      answer:
+        "We screen guests through booking platform identity verification, review history assessment, and our own enquiry process for direct bookings. We set clear expectations through house rules and communicate them at confirmation and check-in.",
+    },
+    {
+      question: "How is maintenance handled?",
+      answer:
+        "Routine maintenance is coordinated by our team using a trusted network of local trades. We handle minor repairs within an agreed spend threshold without requiring owner sign-off each time. For larger items, we'll contact you with a quote and recommendation before proceeding.",
     },
   ],
-  booking: [
+  bookings: [
     {
-      question: "Are rates live?",
+      question: "What payment methods do you accept?",
       answer:
-        "MVP uses placeholder and starting rates. The architecture is prepared for dynamic pricing and availability integration later.",
+        "We accept credit and debit cards via our secure PayPal-powered payment gateway. Bank transfer is available for extended stays on request. All payments are processed securely — we do not store card details.",
+    },
+    {
+      question: "Can I modify my booking after confirmation?",
+      answer:
+        "Modifications are subject to availability and must be requested at least 48 hours before your check-in date. Date extensions are processed as a separate payment. Date reductions may attract a partial refund in line with our cancellation policy.",
+    },
+    {
+      question: "Is there a minimum stay requirement?",
+      answer:
+        "Most properties have a minimum of two nights. Some properties in higher-demand periods require a three or four night minimum. Minimum stay requirements are shown on each property listing before you book.",
+    },
+    {
+      question: "Are bookings instant or request-based?",
+      answer:
+        "Enquiries submitted through our website are reviewed and confirmed within a few hours. Instant confirmation is available through our channel partners. Direct bookings allow us to better prepare for your arrival and ensure everything is ready.",
     },
   ],
-  cancellations: [
+  properties: [
     {
-      question: "Where are cancellation terms shown?",
+      question: "What types of properties do you accept?",
       answer:
-        "Cancellations and booking conditions are surfaced on booking-related pages and the Booking Terms page.",
+        "We work with apartments, townhouses, and houses that meet our presentation and location standards. Properties need to be in well-maintained condition with quality furnishings, reliable appliances, and strong internet connectivity. We don't manage student accommodation or low-quality stock.",
     },
-  ],
-  requirements: [
     {
-      question: "Are building restrictions important before onboarding?",
+      question: "Are there location requirements?",
       answer:
-        "Yes. Owners should disclose any known building restrictions, by-laws, or operational constraints during application.",
+        "We currently operate across inner Melbourne suburbs including South Yarra, St Kilda, Richmond, Fitzroy, Carlton, Southbank, Docklands, and the CBD. Properties should be within reasonable proximity to dining, transport, and local amenity.",
+    },
+    {
+      question: "What furniture and styling standard is expected?",
+      answer:
+        "Properties should be comfortably and cohesively furnished to a quality that suits our guest demographic. We can provide styling advisory as part of onboarding for properties that need refinement. Professional photography is arranged once the property is ready.",
+    },
+    {
+      question: "Can I list a property that is already on Airbnb or other platforms?",
+      answer:
+        "Yes. We can manage existing listings across multiple channels, including Airbnb, Booking.com, and others. We use Hostaway to synchronise calendars and pricing across channels. You don't need to remove existing listings to work with us.",
     },
   ],
 };

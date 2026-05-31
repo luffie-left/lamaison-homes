@@ -34,16 +34,16 @@ export default async function MelbournePage() {
         <div className="relative mx-auto max-w-7xl px-4 py-28 sm:px-6 lg:px-8">
           <div className="max-w-3xl space-y-5 text-stone-50">
             <p className="text-xs uppercase tracking-[0.34em] text-stone-200">Destination / Melbourne</p>
-            <h1 className="font-serif text-5xl leading-tight sm:text-6xl">Curated stays across Melbourne’s most considered neighbourhoods.</h1>
+            <h1 className="font-serif text-5xl leading-tight sm:text-6xl">Curated stays across Melbourne&apos;s most considered neighbourhoods.</h1>
             <p className="max-w-2xl text-lg leading-8 text-stone-200">
-              A boutique collection of homes selected for comfort, character, and consistency — backed by responsive support and professional management.
+              From South Yarra to St Kilda, Richmond to the CBD &mdash; a boutique collection of professionally managed homes selected for character, comfort, and consistency.
             </p>
           </div>
         </div>
       </section>
 
       <section className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
-        <SectionHeading title="Melbourne, interpreted through neighbourhoods and well-managed homes." description="This page becomes the scalable template for future suburb and city destination landing pages." />
+        <SectionHeading title="Melbourne, interpreted through neighbourhoods and well-managed homes." description="Melbourne is one of the most liveable cities in the world &mdash; diverse, culturally rich, and home to some of Australia&apos;s best dining, architecture, and inner-city living. Our collection spans the neighbourhoods that make it worth staying in." />
         <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {suburbClusters.map((suburb) => (
             <SuburbCard key={suburb} name={suburb} />
@@ -53,7 +53,7 @@ export default async function MelbournePage() {
       </section>
 
       <section className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
-        <SectionHeading eyebrow="Featured stays by suburb" title="Stay in Melbourne with booking confidence." />
+        <SectionHeading eyebrow="Featured stays" title="Select properties, professionally managed." description="Every La Maison Home is chosen for its location, presentation, and guest experience standard. Browse the current collection below." />
         <div className="mt-8 grid gap-6 md:grid-cols-2 xl:grid-cols-4">
           {featuredStays.map((property) => (
             <PropertyCard key={property.slug} property={property} />
@@ -73,7 +73,7 @@ export default async function MelbournePage() {
 
       <section className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
         <div className="flex items-end justify-between gap-6">
-          <SectionHeading eyebrow="Local guides" title="Editorial content that supports both brand and SEO." />
+          <SectionHeading eyebrow="Local guides" title="Melbourne, from the inside." description="Neighbourhood guides, stay inspiration, and owner advice &mdash; written to help you get more from your time in Melbourne." />
           <Link href="/journal" className="hidden text-sm font-medium text-stone-700 lg:block">See all articles</Link>
         </div>
         <div className="mt-8 grid gap-6 lg:grid-cols-3">

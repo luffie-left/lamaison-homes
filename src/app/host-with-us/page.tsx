@@ -51,7 +51,7 @@ export default function HostWithUsPage() {
 
         <SimpleForm
           title="Request an assessment"
-          description="A short owner lead form designed to convert without overwhelming first-touch enquiries."
+          description="Tell us about your property and goals. We&apos;ll follow up with an honest assessment and what to expect from working with us."
           submitLabel="Request an Assessment"
           fields={[
             { name: "name", label: "Name", placeholder: "Your name" },
@@ -67,10 +67,21 @@ export default function HostWithUsPage() {
       </section>
 
       <section className="py-20">
-        <SectionHeading eyebrow="Services" title="Management designed for premium presentation and dependable operations." />
+        <SectionHeading eyebrow="What&apos;s included" title="End-to-end management. Nothing outsourced to you." description="From the first guest enquiry to monthly reporting &mdash; every part of the management process is handled by our team, so you don&apos;t have to be." />
         <div className="mt-8 grid gap-5 sm:grid-cols-2 xl:grid-cols-5">
-          {services.map((service) => (
-            <ServiceCard key={service} title={service} description="Structured delivery built to improve owner confidence and guest consistency." />
+          {[
+            { name: "Listing setup", description: "We write your listing copy, configure your property profile, and ensure your home is positioned to attract the right guests." },
+            { name: "Photography coordination", description: "Professional photography is arranged and coordinated by our team &mdash; capturing your property at its best." },
+            { name: "Pricing optimisation", description: "Dynamic pricing calibrated to seasonal demand, local events, and competitive positioning &mdash; maximising your nightly rate and occupancy." },
+            { name: "Channel distribution", description: "Your property is distributed across Airbnb, Booking.com, and other relevant channels &mdash; with calendars and rates synchronised centrally." },
+            { name: "Guest messaging", description: "All guest communication from enquiry to departure is handled by our team. Prompt, professional, and consistent." },
+            { name: "Check-in coordination", description: "Smooth, reliable access for every guest. We handle key management, smart lock setup, and check-in instructions." },
+            { name: "Cleaning turnover", description: "Hotel-grade cleaning between every stay. Linen laundered, surfaces sanitised, amenities restocked. Every time." },
+            { name: "Maintenance", description: "Routine repairs and urgent issues are coordinated with our trusted local trades network. You&apos;re kept informed throughout." },
+            { name: "Owner reporting", description: "Monthly statements with occupancy, revenue, and operational summaries. Transparent, readable, and on time." },
+            { name: "Furnishing / styling advisory", description: "For properties that need a refresh, we provide practical guidance on presentation, styling, and investment priorities." },
+          ].map((service) => (
+            <ServiceCard key={service.name} title={service.name} description={service.description} />
           ))}
         </div>
       </section>
