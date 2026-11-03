@@ -31,7 +31,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { capturePayPalOrder } from "@/lib/paypal";
-import { createHostawayReservation } from "@/lib/hostaway-reservations";
+import { createHostawayReservation, type CreateReservationResult } from "@/lib/hostaway-reservations";
 
 export const dynamic = "force-dynamic";
 
@@ -273,16 +273,17 @@ export async function POST(req: NextRequest) {
 
   const eventType = event.event_type as string;
   const resource = event.resource as Record<string, unknown> | undefined;
+  const supplementary = resource?.supplementary_data as Record<string, unknown> | undefined;
+  const orderId =
+    supplementary && supplementary.related_ids
+      ? (supplementary.related_ids as Record<string, string>)?.order_id
+      : undefined;
 
   console.log(`[paypal-webhook] Received: ${eventType}`);
 
   // ─── Handle: PAYMENT.CAPTURE.COMPLETED ─────────────────────────────────────
   if (eventType === "PAYMENT.CAPTURE.COMPLETED") {
     const captureId = resource?.id as string | undefined;
-    const orderId = (resource?.supplementary_data as Record<string, unknown> | undefined)
-      ?.related_ids
-      ? ((resource.supplementary_data as Record<string, unknown>).related_ids as Record<string, string>)?.order_id
-      : undefined;
 
     // Try to find the order ID from the resource links or purchase units
     const orderIdFallback =
@@ -346,7 +347,7 @@ export async function POST(req: NextRequest) {
         reference: lead.reference ?? orderIdFallback,
         paypalCaptureId: captureId,
         paypalOrderId: orderIdFallback,
-      }).catch((err: unknown) => {
+      }).catch((err: unknown): CreateReservationResult => {
         console.error("[paypal-webhook] Hostaway push failed:", err);
         return { ok: false, error: String(err) };
       });

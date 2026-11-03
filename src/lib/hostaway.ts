@@ -58,6 +58,7 @@ export type HostawayListing = {
   personCapacity: number;
   price: number; // nightly rate
   cleaningFee: number;
+  minimumStay?: number;
   publicDescription: string;
   houseRules: string;
   checkInTime?: number;
