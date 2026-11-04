@@ -4,6 +4,9 @@ import { Fraunces, Inter } from "next/font/google";
 import "./globals.css";
 
 import { PageShell } from "@/components/layout/page-shell";
+import { VoiceButton } from "@/components/voice/VoiceButton";
+import { VoiceDisclosure } from "@/components/voice/VoiceDisclosure";
+import ConciergeChat from "@/components/ConciergeChat";
 import { siteConfig } from "@/lib/site";
 import { absoluteUrl } from "@/lib/utils";
 
@@ -50,13 +53,14 @@ export default function RootLayout({
     <html lang="en" className={`${inter.variable} ${fraunces.variable}`}>
       <body className="font-sans antialiased">
         <PageShell>{children}</PageShell>
-        {/* Floating widgets: disabled while MAINTENANCE_MODE is on.
-            Voice/chat had overlapping tap targets on mobile (LMH-004) and
-            the voice concierge needs a privacy/AI disclosure before it
-            goes live. Re-enable one at a time post-relaunch:
-            <VoiceButton />
-            <ConciergeChat />
-            — and stack them (chat bottom-6, voice bottom-24) if both return. */}
+        {/* Floating widgets — re-enabled at relaunch 2026-11-05 with stacking
+            (LMH-004 fix): chat stays at bottom-6 right-6; the voice widget is
+            lifted above it at bottom-24 (its own fixed wrapper updated to
+            bottom: 96px). VoiceDisclosure satisfies LMH-009 (AI/privacy
+            notice adjacent to the voice button). */}
+        <ConciergeChat />
+        <VoiceButton />
+        <VoiceDisclosure />
       </body>
     </html>
   );

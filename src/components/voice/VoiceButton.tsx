@@ -297,11 +297,13 @@ export function VoiceButton() {
         </div>
       )}
 
-      {/* Main floating button */}
+      {/* Main floating button — stacked above the chat widget (LMH-004):
+          chat sits at bottom-6 (24px), voice lifted to 96px so the two
+          64px tap targets never overlap on mobile. */}
       <div
         style={{
           position: 'fixed',
-          bottom: 24,
+          bottom: 96,
           right: 24,
           zIndex: 9999,
           display: 'flex',

@@ -7,7 +7,7 @@ export default function PrivacyPolicyPage() {
         <p className="text-sm leading-7 text-stone-600">
           La Maison Homes (&ldquo;we&rdquo;, &ldquo;us&rdquo;, &ldquo;our&rdquo;) is committed to protecting your personal information in accordance with the <em>Privacy Act 1988</em> (Cth) and the Australian Privacy Principles (APPs). This Privacy Policy explains what personal information we collect, why we collect it, how we use it, and your rights in relation to it.
         </p>
-        <p className="text-sm text-stone-500">Last updated: June 2025</p>
+        <p className="text-sm text-stone-500">Last updated: November 2026</p>
       </div>
 
       <div className="mt-12 space-y-10 text-sm leading-7 text-stone-600">
@@ -22,6 +22,7 @@ export default function PrivacyPolicyPage() {
             <li><strong className="text-stone-800">Payment information:</strong> transaction records and payment reference numbers. We do not store credit card numbers or full payment card details; these are handled by our payment processor (PayPal) in accordance with PCI-DSS standards.</li>
             <li><strong className="text-stone-800">Owner information:</strong> property details, bank account information for remittances, and operational communications where you are a property owner or management client.</li>
             <li><strong className="text-stone-800">Communications:</strong> enquiries, feedback, support requests, and correspondence you send to us.</li>
+            <li><strong className="text-stone-800">AI voice concierge:</strong> when you use the AI voice concierge button on our website, your voice is processed in real time to provide the service. This includes automatic transcription, and recording of the call for quality assurance and dispute resolution. See section 5A for details.</li>
             <li><strong className="text-stone-800">Usage data:</strong> IP address, browser type, pages visited, and how you interact with our website, collected via cookies and analytics tools.</li>
           </ul>
         </section>
@@ -77,6 +78,19 @@ export default function PrivacyPolicyPage() {
             <li>support booking flow functionality.</li>
           </ul>
           <p className="mt-3">You can disable cookies in your browser settings, but this may affect your ability to use parts of the website. Our analytics tools are configured to anonymise IP addresses where possible.</p>
+        </section>
+
+        <section>
+          <h2 className="font-serif text-2xl text-stone-950">5A. AI voice concierge</h2>
+          <p className="mt-4">Our website offers an AI voice concierge, clearly identified as an automated assistant. When you use it:</p>
+          <ul className="mt-3 space-y-2 list-disc list-outside pl-5">
+            <li><strong className="text-stone-800">It is an AI, not a human.</strong> You are speaking with an automated assistant. At any point you can ask to be connected with a member of our team, or contact us directly at <a href="mailto:stay@lamaisonhomes.com.au" className="underline">stay@lamaisonhomes.com.au</a>.</li>
+            <li><strong className="text-stone-800">Voice processing:</strong> your audio is streamed to our transcription provider (Deepgram) in real time to convert speech to text so the assistant can respond. Transcript text is used to operate the call and may be used to improve the service.</li>
+            <li><strong className="text-stone-800">Recording and retention:</strong> voice calls are recorded and retained as transcripts for up to <strong className="text-stone-800">12 months</strong> for quality assurance, training, and dispute resolution, then deleted. If a call results in a booking or enquiry, the relevant details are retained as booking records under section 6.</li>
+            <li><strong className="text-stone-800">Consent:</strong> by starting a voice call you are informed (via an on-screen notice) and consent to this processing. If you do not wish to be recorded, please use email or the web chat instead.</li>
+            <li><strong className="text-stone-800">Overseas processing:</strong> Deepgram and related AI providers process data outside Australia (primarily the United States). By using the voice concierge you acknowledge this disclosure.</li>
+          </ul>
+          <p className="mt-3">This section supplements, and does not limit, your rights under sections 6 and 7 — including requesting access to, or deletion of, voice transcripts.</p>
         </section>
 
         <section>

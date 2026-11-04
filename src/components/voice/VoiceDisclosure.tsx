@@ -10,8 +10,8 @@
  * guests must know (a) they are talking to an AI, (b) voice data is
  * processed/transcribed (Deepgram), (c) how to reach a human.
  *
- * TODO(owner sign-off): confirm retention period wording with Mick and
- * link the final /privacy-policy voice-data section before enabling.
+ * Approved by Mick 2026-11-05. Retention: 12 months as transcripts (see
+ * privacy-policy section 5A), then deleted.
  */
 "use client";
 
@@ -31,14 +31,15 @@ export function VoiceDisclosure() {
           <p className="font-semibold text-stone-900">AI Concierge</p>
           <p className="mt-1">
             This is an AI voice assistant — not a human. Calls are recorded and
-            transcribed to improve service. See our{" "}
+            retained as transcripts for up to 12 months (see our{" "}
             <a
               href="/privacy-policy"
               className="underline decoration-stone-400 underline-offset-2"
             >
               privacy policy
-            </a>{" "}
-            for voice-data handling. Prefer a person?{" "}
+            </a>
+            , section 5A). Audio is transcribed by a third-party provider
+            (Deepgram) overseas. Prefer a person?{" "}
             <a
               href="mailto:stay@lamaisonhomes.com.au"
               className="underline decoration-stone-400 underline-offset-2"
