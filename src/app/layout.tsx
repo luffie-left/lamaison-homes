@@ -4,8 +4,6 @@ import { Fraunces, Inter } from "next/font/google";
 import "./globals.css";
 
 import { PageShell } from "@/components/layout/page-shell";
-import { VoiceButton } from "@/components/voice/VoiceButton";
-import ConciergeChat from "@/components/ConciergeChat";
 import { siteConfig } from "@/lib/site";
 import { absoluteUrl } from "@/lib/utils";
 
@@ -52,8 +50,13 @@ export default function RootLayout({
     <html lang="en" className={`${inter.variable} ${fraunces.variable}`}>
       <body className="font-sans antialiased">
         <PageShell>{children}</PageShell>
-        <VoiceButton />
-        <ConciergeChat />
+        {/* Floating widgets: disabled while MAINTENANCE_MODE is on.
+            Voice/chat had overlapping tap targets on mobile (LMH-004) and
+            the voice concierge needs a privacy/AI disclosure before it
+            goes live. Re-enable one at a time post-relaunch:
+            <VoiceButton />
+            <ConciergeChat />
+            — and stack them (chat bottom-6, voice bottom-24) if both return. */}
       </body>
     </html>
   );
