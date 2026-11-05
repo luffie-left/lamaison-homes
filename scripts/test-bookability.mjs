@@ -7,9 +7,34 @@
  */
 
 import assert from "node:assert/strict";
+import { register } from "node:module";
+import { pathToFileURL } from "node:url";
 
-// Use Node's native TS stripping (Node >= 22.6 with flag, >= 23 default).
-const mod = await import("../src/lib/hostaway-bookability.ts");
+// Self-registering TS resolution: works with plain `node scripts/test-bookability.mjs`
+// (no --import flag, no tsx/esbuild dependency). Node ≥ 22.6 strips types
+// natively; the hooks only add extensionless-relative + "@/" alias resolution.
+// If a future Node breaks stripping entirely, fall back to tsx when installed.
+async function loadModule() {
+  try {
+    return await import("../src/lib/hostaway-bookability.ts");
+  } catch (err) {
+    if (err?.code === "ERR_MODULE_NOT_FOUND" || err?.code === "ERR_UNKNOWN_FILE_EXTENSION") {
+      try {
+        register(new URL("./ts-resolve-hooks.mjs", import.meta.url));
+        return await import("../src/lib/hostaway-bookability.ts");
+      } catch {
+        // Last resort: project-local tsx if installed (node_modules/.bin/tsx)
+        const { pathToFileURL: toURL } = await import("node:url");
+        const tsx = "file://" + process.cwd() + "/node_modules/tsx/dist/loader.mjs";
+        register(tsx, toURL(import.meta.url));
+        return await import("../src/lib/hostaway-bookability.ts");
+      }
+    }
+    throw err;
+  }
+}
+
+const mod = await loadModule();
 const {
   isHostawayListingEligible,
   enumerateOvernights,
