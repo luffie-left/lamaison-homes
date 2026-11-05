@@ -119,7 +119,7 @@ function StaysContent() {
     const load = async () => {
       setDataLoading(true);
       try {
-        const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "";
+        const appUrl = ""; // same-origin: use this deployment’s eligibility checks
         const [staysRes, showcasesRes] = await Promise.all([
           fetch(`${appUrl}/api/stays`, { cache: "no-store" }),
           fetch(`${appUrl}/api/showcases`, { cache: "no-store" }),
@@ -132,7 +132,10 @@ function StaysContent() {
         if (showcasesRes.ok) {
           const rawShowcases = await showcasesRes.json();
           if (Array.isArray(rawShowcases)) {
-            showcaseCards = rawShowcases.map((sc: Property & { id: string }) => ({ ...sc }));
+            const eligibleSlugs = new Set(baseProperties.map((property) => property.slug));
+            showcaseCards = rawShowcases
+              .filter((sc: Property) => eligibleSlugs.has(sc.slug))
+              .map((sc: Property & { id: string }) => ({ ...sc }));
           }
         }
 

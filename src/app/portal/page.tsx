@@ -22,6 +22,11 @@ interface Booking {
   nightly_rate: number | null;
   cleaning_fee: number | null;
   status: string;
+  payment_status: string | null;
+  payment_method: string | null;
+  paypal_order_id: string | null;
+  paypal_capture_id: string | null;
+  paid_at: string | null;
   created_at: string;
 }
 
@@ -314,21 +319,15 @@ function PortalContent() {
               )}
             </div>
 
-            {/* Payment status */}
-            <div className={`mt-4 rounded-xl px-4 py-3 flex items-center gap-3 ${
-              booking.status === "confirmed" ? "bg-amber-50 border border-amber-200" :
-              booking.status === "pending_payment" ? "bg-blue-50 border border-blue-200" :
-              "bg-stone-50 border border-stone-200"
-            }`}>
-              <span className="text-lg">{booking.status === "pending_payment" ? "💳" : "⏳"}</span>
-              <div>
-                <p className={`text-xs font-semibold ${booking.status === "pending_payment" ? "text-blue-800" : "text-amber-800"}`}>
-                  {booking.status === "pending_payment" ? "Payment due" : "Payment details coming soon"}
-                </p>
-                <p className={`text-xs mt-0.5 ${booking.status === "pending_payment" ? "text-blue-600" : "text-amber-600"}`}>
-                  We'll contact you with payment instructions shortly
-                </p>
-              </div>
+            {/* Payment state is separate from booking state. */}
+            <div className="mt-4 rounded-xl px-4 py-3 bg-stone-50 border border-stone-200">
+              <p className="text-xs font-semibold text-stone-800">
+                {booking.payment_status === "paid" ? "Payment captured" : booking.status === "pending_payment" ? "Payment due" : "Payment pending"}
+              </p>
+              {booking.payment_method && <p className="text-xs mt-1 text-stone-600">Method: {booking.payment_method}</p>}
+              {booking.paypal_capture_id && <p className="text-xs mt-1 text-stone-600 break-all">Transaction ID: {booking.paypal_capture_id}</p>}
+              {booking.paypal_order_id && <p className="text-xs mt-1 text-stone-600 break-all">PayPal order ID: {booking.paypal_order_id}</p>}
+              {booking.payment_status !== "paid" && <p className="text-xs mt-1 text-stone-500">Payment details will be confirmed by our team.</p>}
             </div>
           </div>
 

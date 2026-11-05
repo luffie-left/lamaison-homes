@@ -1,17 +1,20 @@
 import { NextResponse } from "next/server";
 import {
   hostawayGet,
-  mapToProperty,
+  type HostawayListing,
   type HostawayListingsResponse,
 } from "@/lib/hostaway";
+import { isHostawayListingEligible } from "@/lib/hostaway-bookability";
 import type { Property } from "@/data/mock-data";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 60;
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Supabase fetch — returns only is_published=true properties
-// Falls back to null if the table doesn't exist yet or returns 0 results.
+// Supabase fetch — public listings must be is_published=true AND is_active=true
+// AND currently eligible on Hostaway. Supabase is authoritative for publicity:
+//  - returns [] when Supabase has zero published rows (NOT a Hostaway trigger)
+//  - returns null only on Supabase failure/unconfigured → 503, never fallback
 // ─────────────────────────────────────────────────────────────────────────────
 
 const SUPABASE_URL = (process.env.NEXT_PUBLIC_SUPABASE_URL ?? "").replace(
@@ -70,7 +73,7 @@ function mapSupabaseToProperty(p: SupabaseProperty): Property {
     startingPrice: p.base_price_per_night ?? 0,
     cleaningFee: p.cleaning_fee ?? 0,
     heroImage: sortedPhotos[0]?.url ?? "",
-    gallery: sortedPhotos.slice(0, 4).map((i) => i.url),
+    gallery: sortedPhotos.slice(0, 4).map(i => i.url),
     amenities: p.amenities ?? [],
     descriptionShort: p.description?.substring(0, 200) ?? "",
     descriptionLong: p.description ?? "",
@@ -80,14 +83,16 @@ function mapSupabaseToProperty(p: SupabaseProperty): Property {
     localHighlights: [],
     status: "live",
     luxuryTier: (p.tier as "Signature" | "Reserve" | "Collection" | undefined) ?? undefined,
-    workFriendly: (p.amenities ?? []).some((a) =>
-      /wifi|workspace|desk/i.test(a)
-    ),
+    workFriendly: (p.amenities ?? []).some((a) => /wifi|workspace|desk/i.test(a)),
     familyFriendly: (p.max_guests ?? 0) >= 4,
     listingId: p.hostaway_listing_id ?? undefined,
   };
 }
 
+/**
+ * [] = Supabase reachable with zero published rows (valid, empty catalog).
+ * null = Supabase failure or unconfigured → caller must 503 (no fallback).
+ */
 async function getFromSupabase(): Promise<Property[] | null> {
   if (!SUPABASE_URL || !SERVICE_KEY) return null;
 
@@ -110,19 +115,19 @@ async function getFromSupabase(): Promise<Property[] | null> {
 
     const data = await res.json();
 
-    if (!Array.isArray(data) || data.length === 0) {
-      // No published properties yet — fall back to Hostaway direct
+    if (!Array.isArray(data)) {
+      console.warn("[/api/stays] Supabase returned non-array");
       return null;
     }
 
-    return data.map(mapSupabaseToProperty);
+    return data.map(mapSupabaseToProperty); // may legitimately be []
   } catch (err) {
-    console.warn("[/api/stays] Supabase error, falling back to Hostaway:", err);
+    console.warn("[/api/stays] Supabase error:", err);
     return null;
   }
 }
 
-// Hostaway listing data keyed by listing ID — images + live pricing
+// Hostaway listing data for enrichment — images + live pricing
 interface HostawayListingData {
   hero: string;
   gallery: string[];
@@ -132,43 +137,68 @@ interface HostawayListingData {
   lng?: number;
 }
 
-async function getHostawayListingMap(): Promise<Map<number, HostawayListingData>> {
-  try {
-    const data = await hostawayGet<HostawayListingsResponse>(
-      "/listings?limit=100&includeResources=1",
-      300
-    );
-    const map = new Map<number, HostawayListingData>();
-    for (const l of data?.result ?? []) {
-      const sorted = (l.listingImages ?? []).sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
-      map.set(l.id, {
-        hero: sorted[0]?.url ?? "",
-        gallery: sorted.slice(0, 8).map(i => i.url),
-        price: l.price ?? 0,
-        cleaningFee: l.cleaningFee ?? 0,
-        lat: l.lat,
-        lng: l.lng,
-      });
+/**
+ * All Hostaway listings, following pagination to the last page so nothing is
+ * missed (limit=100 per page). Returns null on any failure:
+ *  - any page fetch error (incl. current direct-API 403 — no retry)
+ *  - `count` missing/undefined AND rows.length === limit (can't prove we've
+ *    seen everything) → keep paging until short page or hard cap; if the cap
+ *    is hit, or duplicate listing IDs appear across pages, we cannot trust
+ *    the result → null (fail closed).
+ */
+export async function fetchAllHostawayListings(): Promise<HostawayListing[] | null> {
+  const all: HostawayListing[] = [];
+  const seen = new Set<number>();
+  const limit = 100;
+  const hardCap = 5000;
+  let offset = 0;
+
+  for (let page = 0; page < 100; page++) {
+    let data: HostawayListingsResponse;
+    try {
+      data = await hostawayGet<HostawayListingsResponse>(
+        `/listings?limit=${limit}&offset=${offset}&includeResources=1`,
+        0
+      );
+    } catch (err) {
+      // Fail closed on any page error (403 included — do not retry).
+      console.error("[fetchAllHostawayListings] Hostaway page fetch failed:", err);
+      return null;
     }
-    return map;
-  } catch {
-    return new Map();
+
+    const rows = data?.result;
+    if (!Array.isArray(rows)) {
+      console.error("[fetchAllHostawayListings] Hostaway returned non-array result");
+      return null;
+    }
+
+    for (const row of rows) {
+      if (!row || typeof row.id !== "number") return null; // malformed → fail closed
+      if (seen.has(row.id)) {
+        // Duplicate IDs across pages = pagination is broken/unreliable.
+        console.error("[fetchAllHostawayListings] duplicate listing id", row.id);
+        return null;
+      }
+      seen.add(row.id);
+      all.push(row);
+    }
+
+    const count = typeof data?.count === "number" ? data.count : undefined;
+
+    // Stop when we provably have everything.
+    if (typeof count === "number" ? all.length >= count : false) break;
+    if (rows.length < limit) break; // short page = definitive end
+
+    // count undefined but full page → must keep paging; hard cap guards
+    // against an API that always returns full pages forever.
+    if (all.length >= hardCap) {
+      console.error("[fetchAllHostawayListings] hit hard cap without end marker");
+      return null;
+    }
+    offset += limit;
   }
-}
 
-async function getFromHostaway(): Promise<Property[]> {
-  const data = await hostawayGet<HostawayListingsResponse>(
-    "/listings?limit=100&includeResources=1"
-  );
-
-  const listings = data?.result ?? [];
-
-  // Only include active listings
-  const active = listings.filter(
-    (l) => !l.status || l.status === "active" || l.status === "1"
-  );
-
-  return active.map(mapToProperty);
+  return all;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -177,45 +207,67 @@ async function getFromHostaway(): Promise<Property[]> {
 
 export async function GET() {
   try {
-    // Fetch Supabase properties + Hostaway listing data (images + prices) in parallel
-    const [supabaseStays, hostawayMap] = await Promise.all([
+    const [supabaseStays, hostawayListings] = await Promise.all([
       getFromSupabase(),
-      getHostawayListingMap(),
+      fetchAllHostawayListings(),
     ]);
 
-    if (supabaseStays !== null) {
-      // Merge Hostaway images + live pricing into Supabase properties
-      const merged = supabaseStays.map(stay => {
-        if (!stay.listingId) return stay;
-        const ha = hostawayMap.get(stay.listingId);
-        if (!ha) return stay;
+    // Supabase is authoritative for publicity. Failure/unconfigured → 503.
+    // Never fall back to raw Hostaway listings — that could expose
+    // unpublished/unlisted properties.
+    if (supabaseStays === null) {
+      return NextResponse.json(
+        { error: "Unable to load property catalog", stays: [], total: 0 },
+        { status: 503 }
+      );
+    }
+
+    // Fail closed on Hostaway outage: we cannot verify current eligibility,
+    // so no listing is served as bookable. (403 included — no retry.)
+    if (!hostawayListings) {
+      return NextResponse.json(
+        { error: "Unable to verify current listing availability", stays: [], total: 0 },
+        { status: 503 }
+      );
+    }
+
+    // Current eligibility set from the fresh, fully paginated Hostaway data.
+    const eligible = new Map<number, HostawayListing>();
+    for (const l of hostawayListings) {
+      if (isHostawayListingEligible(l)) eligible.set(l.id, l);
+    }
+
+    // Empty Supabase catalog is a valid state: return empty, no fallback.
+    // Only public rows (query already filtered is_published && is_active)
+    // with a Hostaway mapping that is currently Hostaway-eligible.
+    const merged = supabaseStays
+      .filter((stay) => stay.listingId !== undefined && eligible.has(stay.listingId!))
+      .map((stay) => {
+        const l = eligible.get(stay.listingId!)!;
+        const sorted = (l.listingImages ?? []).sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
+        const ha: HostawayListingData = {
+          hero: sorted[0]?.url ?? "",
+          gallery: sorted.slice(0, 8).map(i => i.url),
+          price: l.price ?? 0,
+          cleaningFee: l.cleaningFee ?? 0,
+          lat: l.lat,
+          lng: l.lng,
+        };
         return {
           ...stay,
-          // Images: use Hostaway when Supabase photos are empty
           heroImage: stay.heroImage || ha.hero,
           gallery: stay.gallery.length ? stay.gallery : ha.gallery,
-          // Pricing: use Hostaway live price when Supabase has null/0
           startingPrice: stay.startingPrice > 0 ? stay.startingPrice : ha.price,
           cleaningFee: (stay.cleaningFee ?? 0) > 0 ? stay.cleaningFee : ha.cleaningFee,
-          // Coordinates: fill from Hostaway
-          lat: (stay as any).lat ?? ha.lat,
-          lng: (stay as any).lng ?? ha.lng,
+          lat: (stay as Property).lat ?? ha.lat,
+          lng: (stay as Property).lng ?? ha.lng,
         };
       });
 
-      return NextResponse.json({
-        stays: merged,
-        total: merged.length,
-        source: "supabase+hostaway",
-      });
-    }
-
-    // Fallback: Hostaway direct (Supabase empty or unreachable)
-    const hostawayStays = await getFromHostaway();
     return NextResponse.json({
-      stays: hostawayStays,
-      total: hostawayStays.length,
-      source: "hostaway",
+      stays: merged,
+      total: merged.length,
+      source: "supabase+hostaway",
     });
   } catch (err) {
     console.error("[/api/stays] Error:", err);

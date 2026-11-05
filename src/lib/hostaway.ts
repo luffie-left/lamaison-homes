@@ -35,7 +35,9 @@ export async function hostawayGet<T>(path: string, revalidate = 300): Promise<T>
   const token = await getToken();
   const res = await fetch(`https://api.hostaway.com/v1${path}`, {
     headers: { Authorization: `Bearer ${token}` },
-    next: { revalidate },
+    // revalidate=0 means "always fresh" for booking-critical reads
+    next: revalidate === 0 ? { revalidate: 0 } : { revalidate },
+    cache: revalidate === 0 ? "no-store" : undefined,
   });
 
   if (!res.ok) {
@@ -70,7 +72,20 @@ export type HostawayListing = {
     bedroomNumber: number;
   }>;
   amenities: string[];
-  status: string; // 'active' | 'inactive'
+  status: string; // 'active' | 'inactive' | 'archived' | ... (see isHostawayListingEligible)
+  /**
+   * Hostaway "current listing" special status. Observed live values:
+   *   - 387779 → "archived" (not directly bookable)
+   *   - 303598 → null (normal, subject to calendar and local publication)
+   * Unknown values fail closed in hostaway-bookability.ts.
+   */
+  specialStatus?: string | null;
+  /** Optional explicit exclusion flags (present on some API versions). */
+  archived?: boolean | number;
+  unlisted?: boolean | number;
+  deleted?: boolean | number;
+  /** Optional direct-booking flag when the API exposes it. */
+  isBookable?: boolean | number;
   externalCalendarUrl?: string;
 };
 
@@ -89,6 +104,8 @@ export type HostawayCalendarEntry = {
   date: string;
   status: string;
   isAvailable: number;
+  /** Per-date minimum stay (applies to arrivals on this date) when returned. */
+  minimumStay?: number;
 };
 
 export type HostawayCalendarResponse = {

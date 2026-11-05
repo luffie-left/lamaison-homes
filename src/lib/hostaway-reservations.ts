@@ -7,6 +7,7 @@
  */
 
 import { getToken } from '@/lib/hostaway'
+import { paymentAuditNote, paypalEnvironment } from '@/lib/payment-details'
 
 const HOSTAWAY_BASE = 'https://api.hostaway.com/v1'
 
@@ -21,7 +22,7 @@ export interface CreateReservationInput {
   guests: number
   totalPrice: number
   cleaningFee?: number | null
-  reference: string  // LM-YYYYMMDD-XXXX — stored as confirmationCode
+  reference: string  // LM-YYYYMMDD-XXXX — included in the audit note
   paypalCaptureId: string
   paypalOrderId: string
 }
@@ -42,6 +43,15 @@ export async function createHostawayReservation(
     const [firstName, ...rest] = input.guestName.trim().split(' ')
     const lastName = rest.join(' ') || firstName
 
+    const auditNote = paymentAuditNote({
+      environment: paypalEnvironment(process.env.PAYPAL_ENVIRONMENT),
+      reference: input.reference,
+      captureId: input.paypalCaptureId,
+      orderId: input.paypalOrderId,
+      amount: input.totalPrice,
+      currency: 'AUD',
+    })
+
     const body = {
       channelId: 2000,                    // Direct booking
       listingMapId: input.listingId,
@@ -58,12 +68,12 @@ export async function createHostawayReservation(
       totalPrice: input.totalPrice,
       cleaningFee: input.cleaningFee ?? 0,
       currency: 'AUD',
-      isPaid: 1,                          // already paid via PayPal
-      paymentStatus: 'paid',
-      status: 'confirmed',
-      confirmationCode: input.reference,
-      hostNote: `Direct booking via La Maison Homes website. PayPal order: ${input.paypalOrderId}. Capture: ${input.paypalCaptureId}`,
-      comment: `Paid via PayPal — Capture ID: ${input.paypalCaptureId}`,
+      // Hostaway documents `paypal` as a payment method. Do not force paid or
+      // confirmed flags: sandbox never moves real funds, and earlier tests
+      // showed Hostaway ignored unsupported payment/status fields.
+      paymentMethod: 'paypal',
+      hostNote: `Direct booking via La Maison Homes website.\n${auditNote}`,
+      comment: auditNote,
     }
 
     const res = await fetch(`${HOSTAWAY_BASE}/reservations`, {
@@ -83,10 +93,15 @@ export async function createHostawayReservation(
     }
 
     const reservation = data.result ?? data
+    const reservationId = reservation.id ?? reservation.hostawayReservationId
+    if (!Number.isInteger(reservationId) || reservationId <= 0) {
+      console.error('[hostaway-reservations] Create returned no reservation ID; reconciliation required')
+      return { ok: false, error: 'Hostaway response did not contain a reservation ID; reconcile before retrying' }
+    }
     return {
       ok: true,
-      hostawayReservationId: reservation.id ?? reservation.hostawayReservationId,
-      confirmationCode: reservation.confirmationCode ?? input.reference,
+      hostawayReservationId: reservationId,
+      confirmationCode: reservation.confirmationCode ?? undefined,
     }
   } catch (err) {
     console.error('[hostaway-reservations] Unexpected error:', err)

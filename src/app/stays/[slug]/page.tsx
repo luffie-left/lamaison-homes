@@ -38,10 +38,8 @@ export const dynamic = "force-dynamic";
 
 async function getStay(slug: string): Promise<Property | null> {
   try {
-    const appUrl = (process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000").replace(/\n/g, "").trim();
-    const res = await fetch(`${appUrl}/api/stays/${slug}`, {
-      next: { revalidate: 300 },
-    });
+    const appUrl = (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000").replace(/\n/g, "").trim();
+    const res = await fetch(`${appUrl}/api/stays/${slug}`, { cache: "no-store" });
     if (!res.ok) return null;
     const data = await res.json();
     return (data.stay as Property) ?? null;
@@ -52,10 +50,8 @@ async function getStay(slug: string): Promise<Property | null> {
 
 async function getSimilarStays(currentSlug: string): Promise<Property[]> {
   try {
-    const appUrl = (process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000").replace(/\n/g, "").trim();
-    const res = await fetch(`${appUrl}/api/stays`, {
-      next: { revalidate: 300 },
-    });
+    const appUrl = (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000").replace(/\n/g, "").trim();
+    const res = await fetch(`${appUrl}/api/stays`, { cache: "no-store" });
     if (!res.ok) return [];
     const data = await res.json();
     return ((data.stays as Property[]) ?? [])

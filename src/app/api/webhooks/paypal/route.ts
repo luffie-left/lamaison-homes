@@ -70,13 +70,8 @@ async function verifyWebhookSignature(
   rawBody: string
 ): Promise<boolean> {
   if (!WEBHOOK_ID) {
-    // WEBHOOK_ID not set — skip verification in dev, fail in production
-    if (process.env.PAYPAL_ENVIRONMENT === "live") {
-      console.error("[paypal-webhook] PAYPAL_WEBHOOK_ID not set — rejecting in live mode");
-      return false;
-    }
-    console.warn("[paypal-webhook] PAYPAL_WEBHOOK_ID not set — skipping sig verify in sandbox");
-    return true;
+    console.error("[paypal-webhook] PAYPAL_WEBHOOK_ID not set — rejecting unsigned events");
+    return false;
   }
 
   try {

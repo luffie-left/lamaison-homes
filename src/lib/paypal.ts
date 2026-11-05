@@ -143,6 +143,7 @@ export async function verifyPayPalOrder(orderId: string): Promise<{
   status: string
   amount: number | null
   reference: string | null
+  currency: string | null
 }> {
   const token = await getPayPalToken()
 
@@ -151,7 +152,7 @@ export async function verifyPayPalOrder(orderId: string): Promise<{
   })
 
   if (!res.ok) {
-    return { verified: false, status: 'FETCH_ERROR', amount: null, reference: null }
+    return { verified: false, status: 'FETCH_ERROR', amount: null, reference: null, currency: null }
   }
 
   const data = await res.json()
@@ -163,5 +164,6 @@ export async function verifyPayPalOrder(orderId: string): Promise<{
     status: data.status ?? 'UNKNOWN',
     amount: amount ? parseFloat(amount) : null,
     reference: reference ?? null,
+    currency: data.purchase_units?.[0]?.amount?.currency_code ?? null,
   }
 }

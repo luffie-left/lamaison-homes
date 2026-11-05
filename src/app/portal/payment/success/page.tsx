@@ -16,6 +16,7 @@ function SuccessContent() {
 
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading')
   const [reference, setReference] = useState<string | null>(null)
+  const [transactionId, setTransactionId] = useState<string | null>(null)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
   const [countdown, setCountdown] = useState(5)
   const captureAttempted = useRef(false)
@@ -42,6 +43,7 @@ function SuccessContent() {
 
         if (res.ok && data.success) {
           setReference(data.reference ?? null)
+          setTransactionId(data.captureId ?? null)
           setStatus('success')
         } else {
           console.error('[success page] Capture failed:', data)
@@ -132,6 +134,13 @@ function SuccessContent() {
           <div className="bg-stone-50 rounded-xl px-4 py-3 mb-6 inline-block">
             <p className="text-xs text-stone-400 uppercase tracking-wide mb-1">Booking reference</p>
             <p className="font-mono font-semibold text-stone-900 text-sm">{reference}</p>
+          </div>
+        )}
+
+        {transactionId && (
+          <div className="bg-stone-50 rounded-xl px-4 py-3 mb-6 text-left">
+            <p className="text-xs text-stone-400 uppercase tracking-wide mb-1">PayPal transaction ID</p>
+            <p className="font-mono text-stone-900 text-sm break-all">{transactionId}</p>
           </div>
         )}
 
