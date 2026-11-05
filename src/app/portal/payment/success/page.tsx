@@ -7,8 +7,12 @@ import Link from 'next/link'
 function SuccessContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
-  const token = searchParams.get('token') ?? searchParams.get('token_id') // PayPal appends ?token=<EC-TOKEN> to the return URL
-  const orderId = searchParams.get('orderId') ?? (token && token.startsWith('EC-') ? token : null) // payer-action-return carries PayPal's order token as ?token=
+  // New links distinguish our portal token from PayPal's `token` order ID.
+  // Older links used ?token=<portal-token>; capture can fall back to the
+  // PayPal order ID already stored on the authenticated lead.
+  const portalToken = searchParams.get('portalToken') ?? searchParams.get('token')
+  const orderId = searchParams.get('orderId') ??
+    (searchParams.has('portalToken') ? searchParams.get('token') : null)
 
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading')
   const [reference, setReference] = useState<string | null>(null)
@@ -17,9 +21,9 @@ function SuccessContent() {
   const captureAttempted = useRef(false)
 
   useEffect(() => {
-    if (!token || !orderId) {
+    if (!portalToken) {
       setStatus('error')
-      setErrorMsg('Missing token or order ID in URL.')
+      setErrorMsg('Missing booking token in URL.')
       return
     }
 
@@ -32,7 +36,7 @@ function SuccessContent() {
         const res = await fetch('/api/payment/capture', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ orderId, portalToken: token }),
+          body: JSON.stringify({ orderId, portalToken }),
         })
         const data = await res.json()
 
@@ -52,18 +56,18 @@ function SuccessContent() {
     }
 
     capture()
-  }, [token, orderId])
+  }, [portalToken, orderId])
 
   // Auto-redirect countdown after success
   useEffect(() => {
     if (status !== 'success') return
     if (countdown <= 0) {
-      router.push(`/portal?token=${token}`)
+      router.push(`/portal?token=${encodeURIComponent(portalToken ?? '')}`)
       return
     }
     const t = setTimeout(() => setCountdown(c => c - 1), 1000)
     return () => clearTimeout(t)
-  }, [status, countdown, token, router])
+  }, [status, countdown, portalToken, router])
 
   if (status === 'loading') {
     return (
@@ -86,7 +90,7 @@ function SuccessContent() {
           <p className="text-sm text-stone-500 mb-6 leading-relaxed">{errorMsg}</p>
           <div className="space-y-3">
             <Link
-              href={`/portal?token=${token}`}
+              href={`/portal?token=${encodeURIComponent(portalToken ?? '')}`}
               className="block w-full bg-stone-950 text-stone-50 py-3 rounded-full text-sm font-medium hover:bg-stone-800 transition-colors text-center"
             >
               View booking status
@@ -132,7 +136,7 @@ function SuccessContent() {
         )}
 
         <Link
-          href={`/portal?token=${token}`}
+          href={`/portal?token=${encodeURIComponent(portalToken ?? '')}`}
           className="block w-full bg-stone-950 text-stone-50 py-3 rounded-full text-sm font-medium hover:bg-stone-800 transition-colors text-center mb-4"
         >
           View booking details
