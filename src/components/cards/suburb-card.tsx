@@ -6,12 +6,12 @@ import Link from "next/link";
 const SUBURB_PHOTOS: Record<string, string> = {
   "CBD":         "https://images.unsplash.com/photo-1545044846-351ba102b6d5?w=800&q=80", // Flinders St Station
   "Southbank":   "https://images.unsplash.com/photo-1514395462725-fb4566210144?w=800&q=80", // Southbank waterfront
-  "Docklands":   "https://images.unsplash.com/photo-1596394516093-501ba68a0ba6?w=800&q=80", // Melbourne waterfront
-  "Fitzroy":     "https://images.unsplash.com/photo-1568454537842-d933259bb258?w=800&q=80", // Melbourne laneways
+  "Docklands":   "https://images.unsplash.com/photo-1720951912930-ec0c572f6238?w=800&q=80", // Docklands harbour + Marvel Stadium
+  "Fitzroy":     "https://images.unsplash.com/photo-1530406831759-15c5c0cbce8b?w=800&q=80", // Hosier Lane street art
   "South Yarra": "https://images.unsplash.com/photo-1577086664693-894d8405334a?w=800&q=80", // Chapel St
   "St Kilda":    "https://images.unsplash.com/photo-1547592180-85f173990554?w=800&q=80", // St Kilda pier/beach
-  "Richmond":    "https://images.unsplash.com/photo-1555476618-b5bd70e49ede?w=800&q=80", // Melbourne street
-  "Carlton":     "https://images.unsplash.com/photo-1568454537842-d933259bb258?w=800&q=80", // Melbourne laneways
+  "Richmond":    "https://images.unsplash.com/photo-1706412215593-153a556ceb09?w=800&q=80", // MCG, Richmond
+  "Carlton":     "https://images.unsplash.com/photo-1736910101505-f8ee0aaa9b60?w=800&q=80", // Melbourne Museum, Carlton
   "Melbourne":   "https://images.unsplash.com/photo-1545044846-351ba102b6d5?w=800&q=80",
   "Box Hill":    "https://images.unsplash.com/photo-1577086664693-894d8405334a?w=800&q=80",
 };
