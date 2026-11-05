@@ -15,7 +15,13 @@ export const dynamic = 'force-dynamic'
 
 const SUPABASE_URL = (process.env.NEXT_PUBLIC_SUPABASE_URL ?? '').replace(/\n/g, '')
 const SERVICE_KEY = (process.env.SUPABASE_SERVICE_ROLE_KEY ?? '').replace(/\n/g, '')
-const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL ?? 'https://lamaison-homes.vercel.app').replace(/\n/g, '')
+// Keep sandbox callbacks on their Vercel preview instead of sending a test
+// buyer to the public site's (potentially different) deployed checkout code.
+const SITE_URL = (
+  process.env.VERCEL_ENV === 'preview' && process.env.VERCEL_URL
+    ? `https://${process.env.VERCEL_URL}`
+    : process.env.NEXT_PUBLIC_SITE_URL ?? 'https://lamaison-homes.vercel.app'
+).replace(/\n/g, '')
 
 export async function POST(req: NextRequest) {
   try {
