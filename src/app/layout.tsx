@@ -44,13 +44,13 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: [
-      { url: "/favicon.ico", sizes: "any" },
-      { url: "/icon-32.png", sizes: "32x32", type: "image/png" },
-      { url: "/icon-64.png", sizes: "64x64", type: "image/png" },
-      { url: "/icon-128.png", sizes: "128x128", type: "image/png" },
-      { url: "/icon-512.png", sizes: "512x512", type: "image/png" },
+      { url: "/favicon.ico?v=brand-20261105", sizes: "any" },
+      { url: "/icon-32.png?v=brand-20261105", sizes: "32x32", type: "image/png" },
+      { url: "/icon-64.png?v=brand-20261105", sizes: "64x64", type: "image/png" },
+      { url: "/icon-128.png?v=brand-20261105", sizes: "128x128", type: "image/png" },
+      { url: "/icon-512.png?v=brand-20261105", sizes: "512x512", type: "image/png" },
     ],
-    apple: [{ url: "/icon-180.png", sizes: "180x180", type: "image/png" }],
+    apple: [{ url: "/icon-180.png?v=brand-20261105", sizes: "180x180", type: "image/png" }],
   },
 };
 
