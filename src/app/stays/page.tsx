@@ -8,7 +8,7 @@ import { PropertyCard } from "@/components/cards/property-card";
 import { SectionHeading } from "@/components/sections/section-heading";
 import type { Property } from "@/data/mock-data";
 
-const LOCATIONS = ["All Melbourne", "Box Hill", "CBD", "Doncaster", "Fitzroy", "Melbourne", "Southbank", "South Yarra"];
+const LOCATIONS = ["All Melbourne"];
 const BEDROOM_OPTIONS = ["Any", "1", "2", "3", "4+"];
 const GUEST_OPTIONS = ["Any", "1", "2", "3", "4", "5", "6+"];
 const PAGE_SIZE = 12;
