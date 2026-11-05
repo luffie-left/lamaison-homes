@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { journalPosts } from "@/data/mock-data";
@@ -15,7 +16,11 @@ export default async function JournalPostPage({ params }: { params: Promise<{ sl
 
   return (
     <article className="mx-auto max-w-4xl px-4 py-16 sm:px-6 lg:px-8">
-      <p className="text-xs uppercase tracking-[0.3em] text-stone-500">{post.category}</p>
+      <p className="text-xs uppercase tracking-[0.3em] text-stone-500">
+        <Link href={`/category/${post.category.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}`} className="hover:text-stone-900">
+          {post.category}
+        </Link>
+      </p>
       <h1 className="mt-4 font-serif text-5xl leading-tight text-stone-950">{post.title}</h1>
       <p className="mt-5 text-lg leading-8 text-stone-600">{post.excerpt}</p>
       <div className="relative mt-10 min-h-[460px] overflow-hidden rounded-[36px]">

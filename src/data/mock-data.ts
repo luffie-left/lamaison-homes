@@ -243,6 +243,32 @@ export const journalPosts = [
   },
 ];
 
+/**
+ * Journal taxonomy used by /category/[slug]. `name` must match the
+ * `category` field on journalPosts exactly (that's the join key).
+ * Slugs are kebab-case of the name.
+ */
+export const journalCategories = [
+  {
+    slug: "melbourne-guides",
+    name: "Melbourne Guides",
+    description:
+      "Neighbourhood intelligence, seasonal notes, and where to stay across Melbourne.",
+  },
+  {
+    slug: "stay-inspiration",
+    name: "Stay Inspiration",
+    description:
+      "Ideas for weekends away, family escapes, and design-led stays.",
+  },
+  {
+    slug: "owner-advice",
+    name: "Owner Advice",
+    description:
+      "Practical guidance for owners considering professional short-stay management.",
+  },
+];
+
 export const faqItems = {
   guests: [
     {
