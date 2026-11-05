@@ -28,7 +28,10 @@ export default async function MelbournePage() {
     <div>
       <section className="relative overflow-hidden">
         <div className="absolute inset-0">
-          <Image src="/placeholders/melbourne-city.jpg" alt="Melbourne skyline" fill className="object-cover" />
+          {/* Melbourne hero: brand apartment skyline view (real asset).
+              TODO: swap for a licensed Melbourne cityscape photo if brand
+              prefers city imagery over interior skyline shots. */}
+          <Image src="/images/hero-bg.jpg" alt="Melbourne skyline seen from a La Maison apartment" fill className="object-cover" priority />
           <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(20,18,16,0.35),rgba(20,18,16,0.75))]" />
         </div>
         <div className="relative mx-auto max-w-7xl px-4 py-28 sm:px-6 lg:px-8">

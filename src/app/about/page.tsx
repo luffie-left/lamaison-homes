@@ -19,7 +19,15 @@ export default function AboutPage() {
           </div>
         </div>
         <div className="relative min-h-[480px] overflow-hidden rounded-[36px]">
-          <Image src="/placeholders/team-founder.jpg" alt="Founder placeholder" fill className="object-cover" />
+          {/* NOTE: a genuine founder portrait is a licensed asset we don't yet
+              own — using brand interior imagery instead of a stock face.
+              Replace with a real founder photo when available. */}
+          <Image
+            src="/images/concierge.jpg"
+            alt="La Maison Homes welcome setting — champagne, roses and a guest gift on a styled table"
+            fill
+            className="object-cover"
+          />
         </div>
       </section>
 

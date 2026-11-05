@@ -73,6 +73,7 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "**.cloudfront.net" },
       { protocol: "https", hostname: "**.amazonaws.com" },
       { protocol: "https", hostname: "a0.muscache.com" },
+      { protocol: "https", hostname: "images.unsplash.com" },
       { protocol: "https", hostname: "**.hostaway.com" },
       { protocol: "https", hostname: "**.s3.amazonaws.com" },
     ],

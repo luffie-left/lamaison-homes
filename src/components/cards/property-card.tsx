@@ -13,6 +13,7 @@ export function PropertyCard({ property, className }: { property: Property; clas
             src={property.heroImage}
             alt={property.title}
             fill
+            loading="lazy"
             className="object-cover transition duration-700 group-hover:scale-105"
             unoptimized={property.heroImage.includes('hostaway-platform.s3')}
           />

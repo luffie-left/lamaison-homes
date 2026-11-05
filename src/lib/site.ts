@@ -4,7 +4,7 @@ export const siteConfig = {
   description:
     "La Maison Homes. Curated Melbourne stays with hotel-grade care. Beautifully selected homes. Seamless guest stays. Professional short-stay management.",
   url: process.env.NEXT_PUBLIC_SITE_URL || "https://lamaisonhomes.com.au",
-  ogImage: "/placeholders/home-hero-fallback.jpg",
+  ogImage: "/images/hero-bg.jpg",
   email: "bookings@lamaisonhomes.com.au",
   phone: "+61 400 000 000",
   social: {

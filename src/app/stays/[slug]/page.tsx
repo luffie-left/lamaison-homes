@@ -154,13 +154,23 @@ export default async function PropertyPage({
             {heroImage ? (
               <Image
                 src={heroImage}
-                alt={property.title}
+                alt={`${property.title} — main photo`}
                 fill
                 className="object-cover"
                 priority
               />
             ) : (
-              <div className="h-full w-full bg-stone-200" />
+              /* Branded fallback: listing has no photos yet in Hostaway/Supabase.
+                 Better than a bare grey box — shows the brand mark. */
+              <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-stone-100 to-stone-200">
+                <Image
+                  src="/logo-transparent.png"
+                  alt=""
+                  width={120}
+                  height={120}
+                  className="opacity-30"
+                />
+              </div>
             )}
           </div>
 
@@ -173,12 +183,13 @@ export default async function PropertyPage({
                   {img ? (
                     <Image
                       src={img}
-                      alt={`${property.title} ${i + 2}`}
+                      alt={`${property.title} — photo ${i + 2}`}
                       fill
+                      loading="lazy"
                       className="object-cover"
                     />
                   ) : (
-                    <div className="h-full w-full bg-stone-200" />
+                    <div className="flex h-full w-full items-center justify-center bg-stone-100" aria-hidden="true" />
                   )}
                 </div>
               );
