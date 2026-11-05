@@ -79,6 +79,13 @@ export function isHostawayListingEligible(listing: HostawayListing | null | unde
   if (listing.deleted === true || listing.deleted === 1) return false;
   if (listing.isBookable === false || listing.isBookable === 0) return false;
 
+  // 2b. Explicit `active: false` flag — only gate when the API explicitly
+  //     reports false/0 (reliable signal); a missing field is not a signal.
+  //     NOTE: Hostaway's `isBookingEngineActive` refers to THEIR booking-engine
+  //     website product, not our custom site — deliberately NOT gated on here.
+  const active = (listing as { active?: boolean | number }).active;
+  if (active === false || active === 0) return false;
+
   // 3. specialStatus — allowlist. Unknown values (e.g. "archived") fail closed.
   //    Observed live values: 387779 → "archived" (ineligible), 303598 → null (eligible).
   //    NOTE: channel-level "unpublished" flags are NOT checked here — an OTA

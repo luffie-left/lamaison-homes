@@ -1,7 +1,7 @@
 # Hostaway Bookability — Fail-Closed Validation
 
 **Module:** `src/lib/hostaway-bookability.ts`
-**Tests:** `node --import ./scripts/register-ts.mjs scripts/test-bookability.mjs`
+**Tests:** `node scripts/test-bookability.mjs` (self-registering TS resolution)
 
 ## Purpose
 
@@ -42,21 +42,26 @@ Reusable pure eligibility check used by the listing/detail routes.
 
 - `status` ∈ {archived, unlisted, inactive, deleted, paused, snoozed} — or any
   value other than `active` / `1` / empty (unknown ⇒ ineligible)
-- explicit flags `archived` / `unlisted` / `deleted` / `isBookable: false`
+- explicit flags `archived` / `unlisted` / `deleted` / `isBookable: false` /
+  `active: false` (missing fields are not signals — only explicit false/0 gates)
 - `specialStatus` is anything other than `null` (including absent or unknown)
-  (Hostaway documents only `null` and `archived`; unknown values fail closed)
+  (Hostaway documents exactly `null` and `archived`; unknown/missing fail closed)
 
 ### Observed live values
 
 - **387779** → `specialStatus: "archived"` → **ineligible**
 - **303598** → `specialStatus: null` → **eligible**
 
-### Scope note — OTA unpublished ≠ direct ineligible
+### Scope notes — OTA unpublished ≠ direct ineligible; `isBookingEngineActive`
 
 Individual-channel "unpublished" flags (e.g. an Airbnb-only unpublished status)
 do **not** affect direct booking on our own site and are deliberately not
 checked. Only whole-listing state (`status` / `specialStatus`) gates direct
-eligibility.
+eligibility. Likewise, `isBookingEngineActive` reflects **Hostaway's own**
+booking-engine website product — not our custom site — and is intentionally NOT
+used for direct-booking eligibility (typed on `HostawayListing` for reference
+only). The explicit `active: false` flag IS used: it is a reliable exclusion
+signal when the API reports it.
 
 ## Freshness
 

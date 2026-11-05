@@ -86,6 +86,13 @@ export type HostawayListing = {
   deleted?: boolean | number;
   /** Optional direct-booking flag when the API exposes it. */
   isBookable?: boolean | number;
+  /** Optional explicit active flag — false/0 is a reliable exclusion signal. */
+  active?: boolean | number;
+  /**
+   * Hostaway's OWN booking-engine website flag. NOT our custom site's flag —
+   * intentionally NOT used for direct-booking eligibility here.
+   */
+  isBookingEngineActive?: boolean | number;
   externalCalendarUrl?: string;
 };
 

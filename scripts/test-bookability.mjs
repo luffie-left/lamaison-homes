@@ -1,6 +1,7 @@
 /**
  * Pure-policy tests for hostaway-bookability (no network, no writes).
- * Run: node --import ./scripts/register-ts.mjs scripts/test-bookability.mjs
+ * Run: node scripts/test-bookability.mjs   (self-registers TS resolution;
+ * Node ≥ 22.6 native type-stripping, falls back to hooks / project tsx)
  * (Node >= 22 runs TS via --experimental-strip-types; Node >= 23 natively.
  *  We use a small inline loader fallback: if native TS fails, the script
  *  prints instructions. No test framework dependency.)
@@ -8,7 +9,6 @@
 
 import assert from "node:assert/strict";
 import { register } from "node:module";
-import { pathToFileURL } from "node:url";
 
 // Self-registering TS resolution: works with plain `node scripts/test-bookability.mjs`
 // (no --import flag, no tsx/esbuild dependency). Node ≥ 22.6 strips types
@@ -123,6 +123,13 @@ test("unknown non-active status fails closed", () => {
 
 test("status '1' (active legacy) is eligible", () => {
   assert.equal(isHostawayListingEligible({ ...baseListing, status: "1" }), true);
+});
+
+test("explicit active:false flag is ineligible even with healthy status/specialStatus", () => {
+  assert.equal(isHostawayListingEligible({ ...baseListing, active: false }), false);
+  assert.equal(isHostawayListingEligible({ ...baseListing, active: 0 }), false);
+  // Missing `active` field is not a signal — healthy listing stays eligible
+  assert.equal(isHostawayListingEligible({ ...baseListing }), true);
 });
 
 test("explicit archived/unlisted/deleted flags are ineligible", () => {
