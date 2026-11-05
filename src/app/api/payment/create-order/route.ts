@@ -23,19 +23,19 @@ export async function POST(req: NextRequest) {
     const {
       leadId,
       listingId,
-      checkIn,
-      checkOut,
       nights,
-      guests,
       total,
       propertyName,
       portalToken,
     } = body
 
     // --- Validate required fields ---
-    if (!leadId || !total || !portalToken) {
+    // Pay Now creates the enquiry immediately before this call and authenticates
+    // with its random portal token. It intentionally does not need to send the
+    // database lead ID back to us.
+    if (!portalToken) {
       return NextResponse.json(
-        { error: 'leadId, total, and portalToken are required' },
+        { error: 'portalToken is required' },
         { status: 400 }
       )
     }
@@ -45,8 +45,11 @@ export async function POST(req: NextRequest) {
     }
 
     // --- Verify lead exists in Supabase ---
+    const leadLookup = leadId
+      ? `id=eq.${encodeURIComponent(leadId)}&portal_token=eq.${encodeURIComponent(portalToken)}`
+      : `portal_token=eq.${encodeURIComponent(portalToken)}`
     const leadRes = await fetch(
-      `${SUPABASE_URL}/rest/v1/leads?id=eq.${encodeURIComponent(leadId)}&portal_token=eq.${encodeURIComponent(portalToken)}&select=id,reference,name,total_amount,status`,
+      `${SUPABASE_URL}/rest/v1/leads?${leadLookup}&select=id,reference,property_name,total_amount,status`,
       {
         headers: {
           apikey: SERVICE_KEY,
@@ -77,8 +80,12 @@ export async function POST(req: NextRequest) {
     }
 
     // Build a nice reference/description
-    const reference = lead.reference ?? `LM-${leadId.slice(0, 8).toUpperCase()}`
-    const propName = propertyName ?? `Listing #${listingId}`
+    const reference = lead.reference ?? `LM-${lead.id.slice(0, 8).toUpperCase()}`
+    const propName = propertyName ?? lead.property_name ?? `Listing #${listingId}`
+    const amount = Number(lead.total_amount ?? total)
+    if (!Number.isFinite(amount) || amount <= 0) {
+      return NextResponse.json({ error: 'A valid booking total is required' }, { status: 400 })
+    }
     const nightsLabel = nights ? `, ${nights} night${nights !== 1 ? 's' : ''}` : ''
     const description = `La Maison Homes — ${propName}${nightsLabel}`
 
@@ -92,7 +99,7 @@ export async function POST(req: NextRequest) {
 
     // --- Create PayPal order ---
     const { id: orderId, approveUrl } = await createPayPalOrder({
-      amount: Number(total),
+      amount,
       currency: 'AUD',
       reference,
       description,
@@ -102,7 +109,7 @@ export async function POST(req: NextRequest) {
 
     // --- Store paypal_order_id in leads table ---
     const patchRes = await fetch(
-      `${SUPABASE_URL}/rest/v1/leads?id=eq.${encodeURIComponent(leadId)}`,
+      `${SUPABASE_URL}/rest/v1/leads?id=eq.${encodeURIComponent(lead.id)}&portal_token=eq.${encodeURIComponent(portalToken)}`,
       {
         method: 'PATCH',
         headers: {
