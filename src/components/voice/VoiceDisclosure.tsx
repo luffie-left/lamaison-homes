@@ -22,7 +22,7 @@ export function VoiceDisclosure() {
 
   return (
     <div
-      className="fixed bottom-2 right-6 z-[10000] max-w-[260px]"
+      className="fixed bottom-[184px] right-6 z-[10000] max-w-[260px]"
       role="note"
       aria-label="AI concierge disclosure"
     >
