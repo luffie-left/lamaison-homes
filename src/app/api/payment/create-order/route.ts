@@ -82,8 +82,12 @@ export async function POST(req: NextRequest) {
     const nightsLabel = nights ? `, ${nights} night${nights !== 1 ? 's' : ''}` : ''
     const description = `La Maison Homes — ${propName}${nightsLabel}`
 
-    // PayPal return/cancel URLs — orderId placeholder is filled by PayPal in redirect
-    const returnUrl = `${SITE_URL}/portal/payment/success?token=${encodeURIComponent(portalToken)}&orderId={id}`
+    // PayPal return/cancel URLs. NOTE: PayPal v2 rejects `{id}` placeholders in
+    // return_url (INVALID_PARAMETER_SYNTAX) — it appends its own query params
+    // (?token=<order-token>) automatically. The success page reads the order id
+    // via paypal_order_id stored on the lead (looked up by portalToken), and
+    // falls back to PayPal's `token` query param if present.
+    const returnUrl = `${SITE_URL}/portal/payment/success?token=${encodeURIComponent(portalToken)}`
     const cancelUrl = `${SITE_URL}/portal/payment/cancel?token=${encodeURIComponent(portalToken)}`
 
     // --- Create PayPal order ---

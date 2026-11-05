@@ -128,13 +128,18 @@ async function sendPaymentConfirmationEmail(opts: {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
+    // orderId optional: falls back to lead.paypal_order_id when PayPal returns
+    // to the success page without an explicit orderId param.
     const { orderId, portalToken } = body
 
-    if (!orderId || !portalToken) {
+    if (!portalToken) {
       return NextResponse.json(
-        { error: 'orderId and portalToken are required' },
+        { error: 'portalToken is required' },
         { status: 400 }
       )
+    }
+    if (!orderId) {
+      console.warn('[capture] No orderId in request — will fall back to stored paypal_order_id')
     }
 
     if (!SUPABASE_URL || !SERVICE_KEY) {
@@ -170,14 +175,19 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: true, reference: lead.reference, alreadyPaid: true })
     }
 
-    // Verify the PayPal order ID matches what we stored (prevents order swapping)
-    if (lead.paypal_order_id && lead.paypal_order_id !== orderId) {
-      console.error('[capture] Order ID mismatch — stored:', lead.paypal_order_id, 'received:', orderId)
+    // Verify the PayPal order ID matches what we stored (prevents order swapping).
+    // If no orderId in URL, fall back to the stored paypal_order_id on the lead.
+    const effectiveOrderId = orderId ?? lead.paypal_order_id
+    if (!effectiveOrderId) {
+      return NextResponse.json({ error: 'No PayPal order ID for this booking' }, { status: 400 })
+    }
+    if (lead.paypal_order_id && lead.paypal_order_id !== effectiveOrderId) {
+      console.error('[capture] Order ID mismatch — stored:', lead.paypal_order_id, 'received:', effectiveOrderId)
       return NextResponse.json({ error: 'Order ID mismatch' }, { status: 400 })
     }
 
     // --- Capture the PayPal order ---
-    const captureResult = await capturePayPalOrder(orderId)
+    const captureResult = await capturePayPalOrder(effectiveOrderId)
 
     // --- Amount verification: NEVER trust frontend amount ---
     // Compare captured amount to stored expected total
@@ -257,9 +267,9 @@ export async function POST(req: NextRequest) {
         guests: lead.num_guests ?? 1,
         totalPrice: captureResult.amount ?? lead.total_amount ?? 0,
         cleaningFee: lead.cleaning_fee ?? 0,
-        reference: lead.reference ?? orderId,
+        reference: lead.reference ?? effectiveOrderId,
         paypalCaptureId: captureResult.captureId ?? '',
-        paypalOrderId: orderId,
+        paypalOrderId: effectiveOrderId,
       }).catch(err => {
         console.error('[capture] Hostaway push failed (non-fatal):', err)
         return { ok: false, error: String(err) }
@@ -295,7 +305,7 @@ export async function POST(req: NextRequest) {
       guestEmail: lead.email,
       guestName: lead.name,
       propertyName: lead.property_name ?? `Listing #${lead.listing_id}`,
-      reference: lead.reference ?? orderId,
+      reference: lead.reference ?? effectiveOrderId,
       checkIn: lead.check_in,
       checkOut: lead.check_out,
       nights: lead.nights,

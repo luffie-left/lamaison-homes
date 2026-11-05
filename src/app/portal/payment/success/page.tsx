@@ -7,8 +7,8 @@ import Link from 'next/link'
 function SuccessContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
-  const token = searchParams.get('token')
-  const orderId = searchParams.get('orderId') ?? searchParams.get('token_id') // PayPal may use {id}
+  const token = searchParams.get('token') ?? searchParams.get('token_id') // PayPal appends ?token=<EC-TOKEN> to the return URL
+  const orderId = searchParams.get('orderId') ?? (token && token.startsWith('EC-') ? token : null) // payer-action-return carries PayPal's order token as ?token=
 
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading')
   const [reference, setReference] = useState<string | null>(null)
