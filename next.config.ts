@@ -59,6 +59,29 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  // 301s for old WordPress category slugs (pre-rebuild). Google still has
+  // them indexed with lorem-ipsum snippets; redirecting passes ranking
+  // signals to the closest new journal taxonomy pages and speeds up
+  // de-indexing of the stale URLs.
+  async redirects() {
+    return [
+      {
+        source: "/category/life-style",
+        destination: "/category/stay-inspiration",
+        permanent: true,
+      },
+      {
+        source: "/category/around-us",
+        destination: "/category/melbourne-guides",
+        permanent: true,
+      },
+      {
+        source: "/category/uncategorized",
+        destination: "/journal",
+        permanent: true,
+      },
+    ];
+  },
   async headers() {
     return [
       {
