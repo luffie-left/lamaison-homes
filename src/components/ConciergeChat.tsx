@@ -201,10 +201,11 @@ export default function ConciergeChat() {
                 />
                 <input
                   type="tel"
-                  placeholder="Phone (optional)"
+                  placeholder="Phone"
                   value={guestInfo.phone}
                   onChange={e => setGuestInfo(prev => ({ ...prev, phone: e.target.value }))}
                   className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#c9a96e]"
+                  required
                 />
                 <button
                   type="submit"

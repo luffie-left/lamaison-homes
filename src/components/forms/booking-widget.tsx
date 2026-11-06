@@ -138,7 +138,7 @@ export function BookingWidget({
         body: JSON.stringify({
           name,
           email,
-          phone: phone || undefined,
+          phone,
           listingId,
           propertyName: propertyName ?? `Listing #${listingId}`,
           checkIn,
@@ -205,7 +205,7 @@ export function BookingWidget({
         body: JSON.stringify({
           name,
           email,
-          phone: phone || undefined,
+          phone,
           listingId,
           propertyName: propertyName ?? `Listing #${listingId}`,
           checkIn,
@@ -329,8 +329,9 @@ export function BookingWidget({
             />
           </div>
           <div>
-            <label className="mb-1 block text-xs font-medium text-stone-500">Phone (optional)</label>
+            <label className="mb-1 block text-xs font-medium text-stone-500">Phone *</label>
             <input
+              required
               type="tel"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
@@ -569,8 +570,8 @@ export function BookingWidget({
                 className="w-full rounded-xl border border-stone-200 bg-white px-3 py-2.5 text-sm text-stone-900 focus:outline-none focus:ring-2 focus:ring-stone-950" />
             </div>
             <div>
-              <label className="mb-1 block text-xs font-medium text-stone-500">Phone (optional)</label>
-              <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)}
+              <label className="mb-1 block text-xs font-medium text-stone-500">Phone *</label>
+              <input required type="tel" value={phone} onChange={(e) => setPhone(e.target.value)}
                 placeholder="+61 4xx xxx xxx"
                 className="w-full rounded-xl border border-stone-200 bg-white px-3 py-2.5 text-sm text-stone-900 focus:outline-none focus:ring-2 focus:ring-stone-950" />
             </div>

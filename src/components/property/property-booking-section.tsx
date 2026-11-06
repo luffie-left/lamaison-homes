@@ -184,7 +184,7 @@ export function PropertyBookingSection({
 
   async function handleSubmit(e?: React.FormEvent) {
     e?.preventDefault();
-    if (!name || !email) return;
+    if (!name || !email || !phone) return;
     setSubmitting(true);
     setError(null);
     try {
@@ -380,7 +380,7 @@ export function PropertyBookingSection({
                 className="w-full rounded-xl border border-stone-200 px-3 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-stone-400" />
               <input required type="email" placeholder="Email address" value={email} onChange={e => setEmail(e.target.value)}
                 className="w-full rounded-xl border border-stone-200 px-3 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-stone-400" />
-              <input placeholder="Phone (optional)" value={phone} onChange={e => setPhone(e.target.value)}
+              <input required type="tel" placeholder="Phone number" value={phone} onChange={e => setPhone(e.target.value)}
                 className="w-full rounded-xl border border-stone-200 px-3 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-stone-400" />
               <textarea placeholder="Any questions or special requests?" value={message} onChange={e => setMessage(e.target.value)} rows={3}
                 className="w-full rounded-xl border border-stone-200 px-3 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-stone-400" />

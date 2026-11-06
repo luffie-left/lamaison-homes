@@ -30,7 +30,7 @@ export default function OwnerApplicationPage() {
           fields={[
             { name: "fullName", label: "Full name", placeholder: "Your full name" },
             { name: "email", label: "Email", placeholder: "you@example.com", type: "email" },
-            { name: "phone", label: "Phone", placeholder: "+61" },
+            { name: "phone", label: "Phone *", placeholder: "+61", type: "tel", required: true },
             { name: "address", label: "Property address", placeholder: "Address" },
           ]}
           textarea={{ name: "notes", label: "Notes", placeholder: "Timeline to launch, access details, and special concerns." }}

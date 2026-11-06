@@ -56,7 +56,7 @@ export default function HostWithUsPage() {
           fields={[
             { name: "name", label: "Name", placeholder: "Your name" },
             { name: "email", label: "Email", placeholder: "you@example.com", type: "email" },
-            { name: "phone", label: "Phone", placeholder: "+61" },
+            { name: "phone", label: "Phone *", placeholder: "+61", type: "tel", required: true },
             { name: "suburb", label: "Property suburb", placeholder: "South Yarra" },
             { name: "type", label: "Property type", placeholder: "Apartment" },
             { name: "bedrooms", label: "Bedrooms", placeholder: "2" },

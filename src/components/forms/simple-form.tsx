@@ -11,6 +11,7 @@ type Field = {
   label: string;
   placeholder?: string;
   type?: string;
+  required?: boolean;
 };
 
 export function SimpleForm({
@@ -50,7 +51,7 @@ export function SimpleForm({
             {fields.map((field) => (
               <div key={field.name} className="space-y-2">
                 <label className="text-sm text-stone-700">{field.label}</label>
-                <Input name={field.name} type={field.type || "text"} placeholder={field.placeholder} />
+                <Input name={field.name} type={field.type || "text"} placeholder={field.placeholder} required={field.required ?? false} />
               </div>
             ))}
           </div>

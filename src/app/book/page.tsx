@@ -17,6 +17,7 @@ export default function BookPage() {
           fields={[
             { name: "name", label: "Name", placeholder: "Your name" },
             { name: "email", label: "Email", placeholder: "you@example.com", type: "email" },
+            { name: "phone", label: "Phone *", placeholder: "+61 4xx xxx xxx", type: "tel", required: true },
             { name: "destination", label: "Destination", placeholder: "Melbourne" },
             { name: "dates", label: "Dates", placeholder: "Check-in / check-out" },
             { name: "guests", label: "Guests", placeholder: "2" },

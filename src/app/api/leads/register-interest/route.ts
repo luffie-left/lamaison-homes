@@ -117,8 +117,8 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const { name, email, phone, message, suburb, checkIn, checkOut, guests, source_page } = body;
 
-    if (!name || !email) {
-      return NextResponse.json({ error: "name and email are required" }, { status: 400 });
+    if (!name || !email || !phone) {
+      return NextResponse.json({ error: "name, email, and phone are required" }, { status: 400 });
     }
 
     if (!SUPABASE_URL || !SERVICE_KEY) {

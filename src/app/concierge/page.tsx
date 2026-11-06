@@ -33,6 +33,7 @@ export default function ConciergePage() {
           fields={[
             { name: "name", label: "Name", placeholder: "Your name" },
             { name: "email", label: "Email", placeholder: "you@example.com", type: "email" },
+            { name: "phone", label: "Phone *", placeholder: "+61 4xx xxx xxx", type: "tel", required: true },
             { name: "bookingReference", label: "Booking reference", placeholder: "Optional" },
             { name: "stayDates", label: "Stay dates", placeholder: "e.g. 14–17 April" },
             { name: "service", label: "Service requested", placeholder: "Airport transfer" },

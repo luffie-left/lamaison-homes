@@ -21,8 +21,8 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const { name, email, phone, listingId, checkIn, checkOut, guests, message, propertyName, total, nightlyRate, cleaningFee } = body;
 
-    if (!name || !email || !listingId) {
-      return NextResponse.json({ error: "name, email, and listingId are required" }, { status: 400 });
+    if (!name || !email || !listingId || !phone) {
+      return NextResponse.json({ error: "name, email, phone, and listingId are required" }, { status: 400 });
     }
 
     const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL?.replace(/\n/g, "") ?? "";

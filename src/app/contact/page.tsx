@@ -31,7 +31,7 @@ export default function ContactPage() {
           fields={[
             { name: "name", label: "Name", placeholder: "Your name" },
             { name: "email", label: "Email", placeholder: "you@example.com", type: "email" },
-            { name: "phone", label: "Phone", placeholder: "+61" },
+            { name: "phone", label: "Phone *", placeholder: "+61", type: "tel", required: true },
             { name: "type", label: "Enquiry type", placeholder: "Guest / Owner / Partner" },
           ]}
           textarea={{ name: "message", label: "Message", placeholder: "How can we help?" }}
