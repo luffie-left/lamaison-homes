@@ -117,8 +117,8 @@ const ownerSteps = [
 
 async function getFeaturedStays(): Promise<Property[]> {
   try {
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
-    const res = await fetch(`${appUrl}/api/stays`, { next: { revalidate: 300 } });
+    const appUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+    const res = await fetch(`${appUrl}/api/stays`, { cache: "no-store" });
     if (!res.ok) return [];
     const data = await res.json();
     return ((data.stays as Property[]) ?? [])

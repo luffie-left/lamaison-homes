@@ -10,12 +10,15 @@ export async function GET(req: NextRequest) {
   const SERVICE_KEY = (process.env.SUPABASE_SERVICE_ROLE_KEY ?? "").replace(/\n/g, "");
 
   const res = await fetch(
-    `${SUPABASE_URL}/rest/v1/leads?portal_token=eq.${encodeURIComponent(token)}&select=id,name,email,phone,reference,portal_token,property_name,listing_id,check_in,check_out,nights,num_guests,total_amount,nightly_rate,cleaning_fee,status,created_at`,
+    `${SUPABASE_URL}/rest/v1/leads?portal_token=eq.${encodeURIComponent(token)}&select=id,name,email,phone,reference,portal_token,property_name,listing_id,check_in,check_out,nights,num_guests,total_amount,nightly_rate,cleaning_fee,status,payment_status,paypal_order_id,paypal_capture_id,paid_at,created_at`,
     { headers: { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}` } }
   );
 
   if (!res.ok) return NextResponse.json({ error: "Failed to fetch" }, { status: 500 });
   const rows = await res.json();
   if (!Array.isArray(rows) || rows.length === 0) return NextResponse.json({ error: "Not found" }, { status: 404 });
-  return NextResponse.json({ booking: rows[0] });
+  // These identifiers are already persisted per transaction. Environment is not
+  // backfilled from the current deployment: historical rows may be sandbox or live.
+  const row = rows[0];
+  return NextResponse.json({ booking: { ...row, payment_method: row.paypal_order_id || row.paypal_capture_id ? "PayPal" : null } });
 }

@@ -12,8 +12,10 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { capturePayPalOrder } from '@/lib/paypal'
+import { capturePayPalOrder, verifyPayPalOrder } from '@/lib/paypal'
 import { createHostawayReservation } from '@/lib/hostaway-reservations'
+import { paymentMethodLabel, paypalEnvironment } from '@/lib/payment-details'
+import { assertHostawayBookable, BookabilityError } from '@/lib/hostaway-bookability'
 
 export const dynamic = 'force-dynamic'
 
@@ -84,7 +86,9 @@ async function sendPaymentConfirmationEmail(opts: {
             <td style="padding:6px 0;color:#14532d;font-size:13px;">${opts.nights}</td></tr>` : ''}
         ${opts.total ? `<tr><td style="padding:6px 0;color:#166534;font-size:13px;">Amount paid</td>
             <td style="padding:6px 0;color:#14532d;font-size:13px;font-weight:bold;">${formatCurrency(opts.total)} AUD</td></tr>` : ''}
-        ${opts.captureId ? `<tr><td style="padding:6px 0;color:#166534;font-size:13px;">PayPal ref</td>
+        <tr><td style="padding:6px 0;color:#166534;font-size:13px;">Payment method</td>
+            <td style="padding:6px 0;color:#14532d;font-size:13px;">${paymentMethodLabel(paypalEnvironment(process.env.PAYPAL_ENVIRONMENT))}</td></tr>
+        ${opts.captureId ? `<tr><td style="padding:6px 0;color:#166534;font-size:13px;">PayPal transaction ID</td>
             <td style="padding:6px 0;color:#14532d;font-size:11px;font-family:monospace;">${opts.captureId}</td></tr>` : ''}
       </table>
     </div>
@@ -170,9 +174,14 @@ export async function POST(req: NextRequest) {
 
     const lead = leads[0]
 
-    // Idempotency: already confirmed + paid → return success
-    if (lead.payment_status === 'paid' && lead.status === 'confirmed') {
-      return NextResponse.json({ success: true, reference: lead.reference, alreadyPaid: true })
+    // Avoid duplicate sequential captures. Concurrent attempts still require an
+    // atomic processing claim; this preview is not production-ready. A paid lead without PMS linkage needs manual
+    // reconciliation — not a second charge and not a booking confirmation.
+    if (lead.payment_status === 'paid') {
+      if (!lead.hostaway_reservation_id) {
+        return NextResponse.json({ success: false, paymentCaptured: true, needsReview: true, reference: lead.reference, captureId: lead.paypal_capture_id, error: 'Payment was captured but your booking needs review. Please contact us; do not pay again.' }, { status: 409 })
+      }
+      return NextResponse.json({ success: true, reference: lead.reference, captureId: lead.paypal_capture_id, hostawayReservationId: lead.hostaway_reservation_id, alreadyPaid: true })
     }
 
     // Verify the PayPal order ID matches what we stored (prevents order swapping).
@@ -184,6 +193,26 @@ export async function POST(req: NextRequest) {
     if (lead.paypal_order_id && lead.paypal_order_id !== effectiveOrderId) {
       console.error('[capture] Order ID mismatch — stored:', lead.paypal_order_id, 'received:', effectiveOrderId)
       return NextResponse.json({ error: 'Order ID mismatch' }, { status: 400 })
+    }
+
+    // Recheck the actual stored booking immediately before charging. A quote
+    // or a previously created PayPal order is not a reservation or calendar hold.
+    const propertyRes = await fetch(
+      `${SUPABASE_URL}/rest/v1/properties?hostaway_listing_id=eq.${encodeURIComponent(lead.listing_id)}&is_active=eq.true&is_published=eq.true&select=id&limit=1`,
+      { headers: { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}` }, cache: 'no-store' }
+    )
+    if (!propertyRes.ok) return NextResponse.json({ error: 'Unable to verify property publication; payment not captured' }, { status: 503 })
+    const properties = await propertyRes.json()
+    if (!Array.isArray(properties) || properties.length === 0) {
+      return NextResponse.json({ error: 'This property is not available; payment not captured' }, { status: 409 })
+    }
+    await assertHostawayBookable(Number(lead.listing_id), lead.check_in, lead.check_out, Number(lead.num_guests))
+
+    // Verify order identity and amount with PayPal before taking payment.
+    const order = await verifyPayPalOrder(effectiveOrderId)
+    const expectedAmount = Number(lead.total_amount)
+    if (lead.total_amount === null || lead.total_amount === undefined || !order.verified || order.status !== 'APPROVED' || !Number.isFinite(expectedAmount) || order.amount === null || Math.abs(order.amount - expectedAmount) > 0.02 || order.currency !== 'AUD' || order.reference !== lead.reference) {
+      return NextResponse.json({ error: 'PayPal order details do not match this booking; payment not captured' }, { status: 409 })
     }
 
     // --- Capture the PayPal order ---
@@ -232,7 +261,7 @@ export async function POST(req: NextRequest) {
           Prefer: 'return=minimal',
         },
         body: JSON.stringify({
-          status: 'confirmed',
+          // Payment is authoritative; booking remains pending until Hostaway accepts it.
           payment_status: 'paid',
           paypal_capture_id: captureResult.captureId,
           paypal_payer_email: captureResult.payerEmail,
@@ -253,8 +282,8 @@ export async function POST(req: NextRequest) {
     }
 
     // --- Push reservation to Hostaway (blocks calendar on all channels) ---
-    // Run after DB update so we have a confirmed record even if Hostaway fails.
-    // Non-blocking — failure is logged but does not roll back the confirmed payment.
+    // Run after payment is durably recorded. Payment and booking statuses remain separate.
+    // Launch blocker: a capture/webhook atomic claim is still required to prevent races.
     const hostawayResult: { ok: boolean; hostawayReservationId?: number; error?: string } =
       await createHostawayReservation({
         listingId: lead.listing_id,
@@ -275,30 +304,31 @@ export async function POST(req: NextRequest) {
         return { ok: false, error: String(err) }
       })
 
-    if (hostawayResult.ok) {
-      // Store Hostaway reservation ID in lead for cross-reference
-      await fetch(
-        `${SUPABASE_URL}/rest/v1/leads?id=eq.${encodeURIComponent(lead.id)}`,
-        {
-          method: 'PATCH',
-          headers: {
-            apikey: SERVICE_KEY,
-            Authorization: `Bearer ${SERVICE_KEY}`,
-            'Content-Type': 'application/json',
-            Prefer: 'return=minimal',
-          },
-          body: JSON.stringify({
-            hostaway_reservation_id: hostawayResult.hostawayReservationId,
-          }),
-        }
-      ).catch(err => console.error('[capture] Failed to store hostaway_reservation_id:', err))
-      console.log('[capture] Hostaway reservation created:', hostawayResult.hostawayReservationId)
-    } else {
-      // Log urgently — calendar not blocked, needs manual intervention
-      console.error(
-        `[capture] ⚠️ HOSTAWAY PUSH FAILED for lead ${lead.id} (${lead.reference}) — calendar NOT blocked! Error: ${hostawayResult.error}`
-      )
+    if (!hostawayResult.ok || !hostawayResult.hostawayReservationId) {
+      console.error(`[capture] HOSTAWAY PUSH FAILED for lead ${lead.id} (${lead.reference}): ${hostawayResult.error}`)
+      return NextResponse.json({
+        success: false,
+        paymentCaptured: true,
+        needsReview: true,
+        reference: lead.reference,
+        captureId: captureResult.captureId,
+        error: 'Payment was captured but the booking needs review. Please contact us; do not pay again.',
+      }, { status: 409 })
     }
+    // The reservation ID and booking state are stored together only after PMS success.
+    const bookingPatch = await fetch(
+      `${SUPABASE_URL}/rest/v1/leads?id=eq.${encodeURIComponent(lead.id)}`,
+      {
+        method: 'PATCH',
+        headers: { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+        body: JSON.stringify({ hostaway_reservation_id: hostawayResult.hostawayReservationId, status: 'confirmed' }),
+      }
+    )
+    if (!bookingPatch.ok) {
+      console.error('[capture] Hostaway reservation exists but link update failed:', hostawayResult.hostawayReservationId)
+      return NextResponse.json({ success: false, paymentCaptured: true, needsReview: true, reference: lead.reference, captureId: captureResult.captureId, error: 'Payment was captured; booking reconciliation is required. Please contact us; do not pay again.' }, { status: 500 })
+    }
+    console.log('[capture] Hostaway reservation created:', hostawayResult.hostawayReservationId)
 
     // --- Send confirmation email (non-blocking) ---
     sendPaymentConfirmationEmail({
@@ -319,9 +349,13 @@ export async function POST(req: NextRequest) {
       reference: lead.reference,
       captureId: captureResult.captureId,
       hostawayReservationId: hostawayResult.ok ? hostawayResult.hostawayReservationId : null,
-      calendarBlocked: hostawayResult.ok,
+      // A Hostaway reservation exists; channel propagation is not independently verified.
+      calendarBlocked: null,
     })
   } catch (err) {
+    if (err instanceof BookabilityError) {
+      return NextResponse.json({ error: `${err.message}; payment not captured`, code: err.code }, { status: err.status })
+    }
     console.error('[capture] Unhandled error:', err)
     return NextResponse.json({ error: 'Failed to process payment capture' }, { status: 500 })
   }
