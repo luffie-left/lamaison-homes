@@ -20,6 +20,9 @@ const fraunces = Fraunces({
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.url),
+  verification: {
+    google: "UsemCZHbynRSX1Nl6n072y7_F0yRTFZpOVXBuIafy64",
+  },
   title: {
     default: siteConfig.name,
     template: `%s | ${siteConfig.name}`,
