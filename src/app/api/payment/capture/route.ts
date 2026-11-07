@@ -184,6 +184,43 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: true, reference: lead.reference, captureId: lead.paypal_capture_id, hostawayReservationId: lead.hostaway_reservation_id, alreadyPaid: true })
     }
 
+    // RACE GUARD (T012): atomically claim the unpaid→paid transition BEFORE
+    // charging PayPal. Exactly one concurrent request (capture vs webhook) can
+    // win; losers must not charge, re-book, or re-email.
+    const claimRes = await fetch(
+      `${SUPABASE_URL}/rest/v1/leads?id=eq.${encodeURIComponent(lead.id)}&payment_status=eq.unpaid`,
+      {
+        method: 'PATCH',
+        headers: {
+          apikey: SERVICE_KEY,
+          Authorization: `Bearer ${SERVICE_KEY}`,
+          'Content-Type': 'application/json',
+          Prefer: 'return=representation',
+        },
+        body: JSON.stringify({
+          // Processing claim — payment_status stays 'processing' until capture
+          // completes; the webhook safety net can still take over from here.
+          payment_status: 'processing',
+        }),
+      }
+    )
+    if (!claimRes.ok) {
+      console.error('[capture] Claim patch failed:', await claimRes.text())
+      return NextResponse.json({ error: 'Failed to claim booking for processing' }, { status: 500 })
+    }
+    const claimed = await claimRes.json()
+    if (!Array.isArray(claimed) || claimed.length === 0) {
+      // Someone else claimed it between our read and the claim PATCH.
+      console.warn('[capture] Lost processing race for lead', lead.id)
+      return NextResponse.json({ success: false, paymentCaptured: false, retryShortly: true, error: 'Booking is being processed — please wait a moment and refresh.' }, { status: 409 })
+    }
+    // NOTE on claim lifecycle: if this request fails after claiming (capture
+    // error, DB error, Hostaway failure), payment_status remains 'processing'.
+    // The PayPal webhook safety net can complete the paid transition from a
+    // 'processing' state, and an operator can reset 'processing' → 'unpaid'
+    // after verifying no funds moved. A stuck 'processing' lead must NEVER be
+    // auto-retried into a second capture without a webhook event or operator.
+
     // Verify the PayPal order ID matches what we stored (prevents order swapping).
     // If no orderId in URL, fall back to the stored paypal_order_id on the lead.
     const effectiveOrderId = orderId ?? lead.paypal_order_id
@@ -263,6 +300,7 @@ export async function POST(req: NextRequest) {
         body: JSON.stringify({
           // Payment is authoritative; booking remains pending until Hostaway accepts it.
           payment_status: 'paid',
+          // payment is now durable; claim released implicitly by the transition
           paypal_capture_id: captureResult.captureId,
           paypal_payer_email: captureResult.payerEmail,
           paid_at: new Date().toISOString(),
