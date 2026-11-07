@@ -13,9 +13,7 @@ export default function ContactPage() {
       <div className="mt-10 grid gap-10 lg:grid-cols-[0.9fr_1.1fr]">
         <div className="space-y-5 rounded-[32px] bg-white p-8 shadow-[0_24px_80px_rgba(15,23,42,0.06)]">
           {[
-            ["Email", "bookings@lamaisonhomes.com.au"],
-            ["Phone", "+61 400 000 000"],
-            ["WhatsApp", "Placeholder available"],
+            ["Email", "hello@lamaisonhomes.com.au"],
             ["Partnerships", "Owner and partner enquiries welcome"],
           ].map(([label, value]) => (
             <div key={label} className="rounded-[24px] bg-stone-50 px-5 py-4">
