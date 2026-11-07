@@ -311,18 +311,10 @@ export function PropertyBookingSection({
       window.location.href = orderData.approveUrl;
     } catch (err) {
       console.error("[pay-now]", err);
-      // A4: network-level failure after the lead was created — best-effort
-      // server-side marking (replay-safe), then reassure the guest.
-      if (leadPortalToken) {
-        paymentFailedAfterLead = true;
-        try {
-          await fetch("/api/payment/create-order", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ leadId, listingId, portalToken: leadPortalToken, forceFailureMark: true }),
-          });
-        } catch { /* best-effort only */ }
-      }
+      // A4: network-level failure after the lead was created — the enquiry is
+      // safe in Supabase; deterministic server-side marking happens in the
+      // create-order failure path (guarded, replay-safe). Just reassure the guest.
+      if (leadPortalToken) paymentFailedAfterLead = true;
       setError(
         paymentFailedAfterLead
           ? "Your enquiry was received \u2014 payment didn\u2019t complete, we\u2019ll send a secure payment link."
