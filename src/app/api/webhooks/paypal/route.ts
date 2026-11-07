@@ -216,7 +216,7 @@ async function sendConfirmationEmail(lead: {
     </div>
     <p style="color:#5a5a5a;font-size:14px;line-height:1.7;margin:0 0 24px;">Check-in instructions and property access details will be sent 48 hours before arrival.</p>
     <a href="${portalUrl}" style="display:block;background:#1a1a1a;color:#fff;text-align:center;padding:14px 24px;border-radius:50px;text-decoration:none;font-size:14px;margin:0 0 24px;">View booking details →</a>
-    <p style="color:#aaa;font-size:13px;">Questions? <a href="mailto:bookings@lamaisonhomes.com.au" style="color:#c9a96e;">bookings@lamaisonhomes.com.au</a></p>
+    <p style="color:#aaa;font-size:13px;">Questions? <a href="mailto:stay@lamaisonhomes.com.au" style="color:#c9a96e;">stay@lamaisonhomes.com.au</a></p>
   </div>
 </div></body></html>`;
 

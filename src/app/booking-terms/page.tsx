@@ -85,7 +85,7 @@ export default function BookingTermsPage() {
 
         <section>
           <h2 className="font-serif text-2xl text-stone-950">11. Contact</h2>
-          <p className="mt-4">For questions about these terms or your booking, please contact us at <a href="mailto:hello@lamaisonhomes.com.au" className="underline">hello@lamaisonhomes.com.au</a>.</p>
+          <p className="mt-4">For questions about these terms or your booking, please contact us at <a href="mailto:stay@lamaisonhomes.com.au" className="underline">stay@lamaisonhomes.com.au</a>.</p>
         </section>
 
       </div>

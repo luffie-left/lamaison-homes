@@ -103,7 +103,7 @@ export default function HouseRulesPage() {
         </section>
 
         <p className="mt-8 border-t border-stone-100 pt-6 text-xs text-stone-400">
-          These house rules were last updated June 2025. If you have a question about these rules before booking, please contact us at <a href="mailto:hello@lamaisonhomes.com.au" className="underline">hello@lamaisonhomes.com.au</a>.
+          These house rules were last updated June 2025. If you have a question about these rules before booking, please contact us at <a href="mailto:stay@lamaisonhomes.com.au" className="underline">stay@lamaisonhomes.com.au</a>.
         </p>
       </div>
     </div>

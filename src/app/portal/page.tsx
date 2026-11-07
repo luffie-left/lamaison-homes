@@ -366,7 +366,7 @@ function PortalContent() {
                   {[
                     { icon: "🔑", text: "Access code + full address", sub: "Sent 48 hours before arrival" },
                     { icon: "🏠", text: "Self check-in", sub: "Keypad or lockbox entry — no need to meet anyone" },
-                    { icon: "📞", text: "24/7 support", sub: "Contact us anytime via bookings@lamaisonhomes.com.au" },
+                    { icon: "📞", text: "24/7 support", sub: "Contact us anytime via stay@lamaisonhomes.com.au" },
                   ].map((item, i) => (
                     <div key={i} className="flex items-start gap-3 p-3 bg-stone-50 rounded-xl">
                       <span className="text-lg mt-0.5">{item.icon}</span>
@@ -396,10 +396,10 @@ function PortalContent() {
           <div className="px-6 pb-6">
             <h2 className="text-sm font-semibold text-stone-700 uppercase tracking-wide mb-4">Contact us</h2>
             <div className="space-y-3">
-              <a href="mailto:bookings@lamaisonhomes.com.au" className="flex items-center gap-3 p-3 bg-stone-50 rounded-xl hover:bg-stone-100 transition-colors">
+              <a href="mailto:stay@lamaisonhomes.com.au" className="flex items-center gap-3 p-3 bg-stone-50 rounded-xl hover:bg-stone-100 transition-colors">
                 <Mail size={16} className="text-stone-400" />
                 <div>
-                  <p className="text-sm font-medium text-stone-900">bookings@lamaisonhomes.com.au</p>
+                  <p className="text-sm font-medium text-stone-900">stay@lamaisonhomes.com.au</p>
                   <p className="text-xs text-stone-500">Reply to your confirmation email or email us directly</p>
                 </div>
                 <ChevronRight size={14} className="text-stone-300 ml-auto" />

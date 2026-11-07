@@ -102,7 +102,7 @@ async function sendPaymentConfirmationEmail(opts: {
     </a>
 
     <p style="color:#aaa;font-size:13px;line-height:1.6;margin:0;">
-      Questions? <a href="mailto:bookings@lamaisonhomes.com.au" style="color:#c9a96e;">bookings@lamaisonhomes.com.au</a>
+      Questions? <a href="mailto:stay@lamaisonhomes.com.au" style="color:#c9a96e;">stay@lamaisonhomes.com.au</a>
     </p>
   </div>
   <p style="color:#aaa;font-size:11px;text-align:center;margin:16px 0 0;">La Maison Homes · Premium short-stay management · Melbourne</p>

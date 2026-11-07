@@ -16,7 +16,7 @@ const SUPABASE_URL = (process.env.NEXT_PUBLIC_SUPABASE_URL ?? "").replace(/\n/g,
 const SERVICE_KEY = (process.env.SUPABASE_SERVICE_ROLE_KEY ?? "").replace(/\n/g, "").trim();
 const RESEND_API_KEY = (process.env.RESEND_API_KEY ?? "").replace(/\n/g, "").trim();
 const EMAIL_FROM = (process.env.EMAIL_FROM ?? "La Maison Homes <onboarding@resend.dev>").replace(/\n/g, "").trim();
-const STAFF_EMAIL = (process.env.STAFF_NOTIFICATION_EMAIL ?? "bookings@lamaisonhomes.com.au").replace(/\n/g, "").trim();
+const STAFF_EMAIL = (process.env.STAFF_NOTIFICATION_EMAIL ?? "stay@lamaisonhomes.com.au").replace(/\n/g, "").trim();
 
 function generateReference(): string {
   const date = new Date().toISOString().slice(0, 10).replace(/-/g, "");

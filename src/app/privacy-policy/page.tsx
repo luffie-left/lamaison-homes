@@ -129,7 +129,7 @@ export default function PrivacyPolicyPage() {
           <address className="mt-3 not-italic space-y-1">
             <p><strong className="text-stone-800">La Maison Homes</strong></p>
             <p>Melbourne, Victoria, Australia</p>
-            <p>Email: <a href="mailto:privacy@lamaisonhomes.com.au" className="underline">privacy@lamaisonhomes.com.au</a></p>
+            <p>Email: <a href="mailto:stay@lamaisonhomes.com.au" className="underline">stay@lamaisonhomes.com.au</a></p>
           </address>
           <p className="mt-3">This Privacy Policy is governed by the laws of Victoria, Australia and the <em>Privacy Act 1988</em> (Cth).</p>
         </section>

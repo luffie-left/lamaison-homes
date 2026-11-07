@@ -79,7 +79,7 @@ export default function TermsPage() {
 
         <section>
           <h2 className="font-serif text-2xl text-stone-950">10. Contact</h2>
-          <p className="mt-4">For questions about these terms, please contact La Maison Homes at <a href="mailto:hello@lamaisonhomes.com.au" className="underline">hello@lamaisonhomes.com.au</a>.</p>
+          <p className="mt-4">For questions about these terms, please contact La Maison Homes at <a href="mailto:stay@lamaisonhomes.com.au" className="underline">stay@lamaisonhomes.com.au</a>.</p>
         </section>
 
       </div>

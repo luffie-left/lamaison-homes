@@ -1,7 +1,7 @@
 /**
  * Email sending via Resend
  * FROM: onboarding@resend.dev (temporary until lamaisonhomes.com.au verified in Resend)
- * TODO: Change EMAIL_FROM env var to "bookings@lamaisonhomes.com.au" after domain verification
+ * TODO: Change EMAIL_FROM env var to "stay@lamaisonhomes.com.au" after domain verification
  */
 
 const RESEND_API_KEY = process.env.RESEND_API_KEY ?? ''
@@ -86,7 +86,7 @@ export async function sendEnquiryConfirmation(opts: {
 
     <a href="${portalUrl}" style="display:block;background:#1a1a1a;color:#fff;text-align:center;padding:14px 24px;border-radius:50px;text-decoration:none;font-size:14px;margin:0 0 24px;">View your booking →</a>
 
-    <p style="color:#aaa;font-size:13px;line-height:1.6;margin:0;">Questions? Reply to this email or contact us at <a href="mailto:bookings@lamaisonhomes.com.au" style="color:#c9a96e;">bookings@lamaisonhomes.com.au</a></p>
+    <p style="color:#aaa;font-size:13px;line-height:1.6;margin:0;">Questions? Reply to this email or contact us at <a href="mailto:stay@lamaisonhomes.com.au" style="color:#c9a96e;">stay@lamaisonhomes.com.au</a></p>
   </div>
   <p style="color:#aaa;font-size:11px;text-align:center;margin:16px 0 0;">La Maison Homes · Premium short-stay management · Melbourne</p>
 </div>
@@ -191,7 +191,7 @@ export async function sendBookingConfirmed(opts: {
 
     <a href="${portalUrl}" style="display:block;background:#1a1a1a;color:#fff;text-align:center;padding:14px 24px;border-radius:50px;text-decoration:none;font-size:14px;margin:0 0 24px;">View booking &amp; invoice →</a>
 
-    <p style="color:#aaa;font-size:13px;">Questions? <a href="mailto:bookings@lamaisonhomes.com.au" style="color:#c9a96e;">bookings@lamaisonhomes.com.au</a></p>
+    <p style="color:#aaa;font-size:13px;">Questions? <a href="mailto:stay@lamaisonhomes.com.au" style="color:#c9a96e;">stay@lamaisonhomes.com.au</a></p>
   </div>
   <p style="color:#aaa;font-size:11px;text-align:center;margin:16px 0 0;">La Maison Homes · Melbourne</p>
 </div>
@@ -222,7 +222,7 @@ export async function sendBookingDeclined(opts: {
     <p style="color:#5a5a5a;line-height:1.7;margin:0 0 24px;">Unfortunately, those dates (${formatDate(opts.checkIn)} – ${formatDate(opts.checkOut)}) are no longer available.</p>
     <p style="color:#5a5a5a;line-height:1.7;margin:0 0 24px;">We'd love to help you find an alternative — browse our Melbourne collection or reply with alternative dates and we'll do our best to accommodate you.</p>
     <a href="https://lamaison-homes.vercel.app/stays" style="display:block;background:#1a1a1a;color:#fff;text-align:center;padding:14px 24px;border-radius:50px;text-decoration:none;font-size:14px;margin:0 0 24px;">Browse other stays →</a>
-    <p style="color:#aaa;font-size:13px;">Questions? <a href="mailto:bookings@lamaisonhomes.com.au" style="color:#c9a96e;">bookings@lamaisonhomes.com.au</a></p>
+    <p style="color:#aaa;font-size:13px;">Questions? <a href="mailto:stay@lamaisonhomes.com.au" style="color:#c9a96e;">stay@lamaisonhomes.com.au</a></p>
   </div>
   <p style="color:#aaa;font-size:11px;text-align:center;margin:16px 0 0;">La Maison Homes · Melbourne</p>
 </div>

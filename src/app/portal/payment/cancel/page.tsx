@@ -40,7 +40,7 @@ function CancelContent() {
         </div>
 
         <p className="mt-6 text-xs text-stone-400">
-          Need help? <a href="mailto:bookings@lamaisonhomes.com.au" className="underline hover:text-stone-700">bookings@lamaisonhomes.com.au</a>
+          Need help? <a href="mailto:stay@lamaisonhomes.com.au" className="underline hover:text-stone-700">stay@lamaisonhomes.com.au</a>
         </p>
       </div>
     </div>

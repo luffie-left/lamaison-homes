@@ -98,7 +98,7 @@ function SuccessContent() {
               View booking status
             </Link>
             <a
-              href="mailto:bookings@lamaisonhomes.com.au"
+              href="mailto:stay@lamaisonhomes.com.au"
               className="block text-sm text-stone-400 hover:text-stone-700 underline"
             >
               Contact support
@@ -157,7 +157,7 @@ function SuccessContent() {
       </div>
 
       <p className="mt-6 text-xs text-stone-400">
-        La Maison Homes · <a href="mailto:bookings@lamaisonhomes.com.au" className="hover:text-stone-600 underline">bookings@lamaisonhomes.com.au</a>
+        La Maison Homes · <a href="mailto:stay@lamaisonhomes.com.au" className="hover:text-stone-600 underline">stay@lamaisonhomes.com.au</a>
       </p>
     </div>
   )
