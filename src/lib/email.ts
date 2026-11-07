@@ -62,7 +62,7 @@ export async function sendEnquiryConfirmation(opts: {
   </div>
   <div style="background:#fff;padding:32px;border-radius:0 0 12px 12px;border:1px solid #e8e0d6;border-top:none;">
     <p style="color:#1a1a1a;font-size:16px;margin:0 0 24px;">Hi ${firstName},</p>
-    <p style="color:#5a5a5a;line-height:1.7;margin:0 0 24px;">Thank you for your enquiry. We've received your request and will confirm your booking within <strong>2 hours</strong>.</p>
+    <p style="color:#5a5a5a;line-height:1.7;margin:0 0 24px;">Thank you for your enquiry. We've received your request and will confirm your booking as soon as possible, usually within a few hours.</p>
     
     <div style="background:#f7f2eb;border-radius:8px;padding:20px;margin:0 0 24px;">
       <p style="color:#888;font-size:11px;letter-spacing:2px;text-transform:uppercase;margin:0 0 16px;">Booking Details</p>

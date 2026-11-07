@@ -19,7 +19,7 @@ export default function BookPage() {
       <div className="mt-10">
         <SimpleForm
           title="Booking enquiry"
-          description="Tell us about your stay and our team will confirm availability and your direct rate within 24 hours."
+          description="Tell us about your stay and our team will confirm availability and your direct rate as soon as possible, usually within a few hours."
           fields={[
             { name: "name", label: "Name", placeholder: "Your name" },
             { name: "email", label: "Email", placeholder: "you@example.com", type: "email" },

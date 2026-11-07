@@ -114,7 +114,7 @@ export async function POST(req: NextRequest) {
       reference,
       portalToken,
       leadId,
-      message: "We'll confirm your booking within 2 hours",
+      message: "We'll confirm your booking as soon as possible, usually within a few hours",
     });
   } catch (err) {
     console.error("[/api/enquiry] Error:", err);
