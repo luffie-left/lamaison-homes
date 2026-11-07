@@ -250,7 +250,7 @@ export function BookingWidget({
         </div>
         <div>
           <p className="text-xl font-medium text-stone-950">Enquiry received</p>
-          <p className="mt-2 text-sm text-stone-500">We&apos;ll confirm within 2 hours.</p>
+          <p className="mt-2 text-sm text-stone-500">We&apos;ll confirm as soon as possible, usually within a few hours.</p>
         </div>
         {checkIn && checkOut && (
           <div className="rounded-xl bg-stone-50 p-4 text-sm text-stone-600">

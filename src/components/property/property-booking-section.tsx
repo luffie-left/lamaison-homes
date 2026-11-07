@@ -265,7 +265,7 @@ export function PropertyBookingSection({
           {bookingRef && (
             <p className="text-xs font-mono bg-stone-100 text-stone-700 px-3 py-1.5 rounded-lg inline-block mb-3">{bookingRef}</p>
           )}
-          <p className="text-sm text-stone-500 mb-4">Check your email — we&apos;ll confirm within 2 hours.</p>
+          <p className="text-sm text-stone-500 mb-4">Check your email — we&apos;ll confirm as soon as possible, usually within a few hours.</p>
           {portalToken && (
             <a href={`/portal?token=${portalToken}`} className="inline-block text-sm text-stone-950 underline underline-offset-2 hover:text-stone-600">
               View booking details →
