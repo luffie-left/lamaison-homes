@@ -93,6 +93,14 @@ function CalendarMonth({
 
 // ── Booking widget ────────────────────────────────────────────────────────────
 
+import {
+  DIAL_CODES,
+  DEFAULT_DIAL_CODE,
+  composeE164,
+  isValidE164,
+} from "@/lib/phone";
+import { serverErrorOr } from "@/lib/client-error";
+
 type Step = "dates" | "enquiry" | "confirmed";
 
 function fmt(n: number) {
@@ -113,11 +121,14 @@ export function PropertyBookingSection({
   listingId,
   nightlyRate,
   cleaningFee,
+  minimumStay,
 }: {
   slug: string;
   listingId: number;
   nightlyRate: number;
   cleaningFee: number;
+  /** Listing-level default min stay (A2 cue — server check stays authoritative). */
+  minimumStay?: number;
 }) {
   const [blockedDates, setBlockedDates] = useState<Set<string>>(new Set());
   const [calLoading, setCalLoading] = useState(true);
@@ -134,7 +145,10 @@ export function PropertyBookingSection({
   const [guests, setGuests] = useState(2);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
+  // A3: dial code + local number, submitted as E.164 (+61412345678)
+  const [phoneDial, setPhoneDial] = useState(DEFAULT_DIAL_CODE);
+  const [phoneLocal, setPhoneLocal] = useState("");
+  const phone = composeE164(phoneDial, phoneLocal); // null until plausible
   const [message, setMessage] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [payNowLoading, setPayNowLoading] = useState(false);
@@ -146,6 +160,21 @@ export function PropertyBookingSection({
   const checkOut = selectedEnd ? format(selectedEnd, "yyyy-MM-dd") : null;
   const nights = checkIn && checkOut ? nightsBetween(checkIn, checkOut) : 0;
   const total = nights * nightlyRate + (nights > 0 ? cleaningFee : 0);
+
+  // A2: live min-stay cue — client-side early warning only; the server
+  // (quote/create-order) re-validates with per-arrival calendar data and wins.
+  const minStayNotMet =
+    typeof minimumStay === "number" &&
+    minimumStay > 1 &&
+    nights > 0 &&
+    nights < minimumStay;
+
+  // A3: full E.164 number ready to submit?
+  const phoneValid = phone !== null && isValidE164(phone);
+  const phoneError =
+    phoneLocal.length > 0 && !phoneValid
+      ? "Enter a valid phone number (7\u201315 digits after the country code)"
+      : null;
 
   const fetchAvailability = useCallback(async () => {
     try {
@@ -184,7 +213,8 @@ export function PropertyBookingSection({
 
   async function handleSubmit(e?: React.FormEvent) {
     e?.preventDefault();
-    if (!name || !email || !phone) return;
+    // A3: phone is a full E.164 string by the time we get here
+    if (!name || !email || !phoneValid || !phone) return;
     setSubmitting(true);
     setError(null);
     try {
@@ -193,7 +223,11 @@ export function PropertyBookingSection({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, email, phone, listingId, checkIn, checkOut, guests, message, total: total > 0 ? total : null, nightlyRate, cleaningFee }),
       });
-      if (!res.ok) throw new Error("Failed");
+      if (!res.ok) {
+        // A1: surface the server's real message (e.g. validation errors)
+        setError(await serverErrorOr(res, "Something went wrong. Please try again."));
+        return;
+      }
       const data = await res.json();
       setBookingRef(data.reference ?? null);
       setPortalToken(data.portalToken ?? null);
@@ -208,8 +242,14 @@ export function PropertyBookingSection({
   // Pay Now — creates enquiry then immediately redirects to PayPal
   async function handlePayNow(e: React.FormEvent) {
     e.preventDefault();
+    if (!phoneValid || !phone) return;
     setPayNowLoading(true);
     setError(null);
+    // A4: once the enquiry is created we have a lead + portal token; if payment
+    // then fails we mark the lead server-side and reassure the guest below.
+    let leadPortalToken: string | null = null;
+    let leadId: string | null = null;
+    let paymentFailedAfterLead = false;
     try {
       // Step 1: Create enquiry in Supabase
       const enquiryRes = await fetch("/api/enquiry", {
@@ -221,16 +261,22 @@ export function PropertyBookingSection({
           propertyName: undefined, // filled by API from listing
         }),
       });
-      if (!enquiryRes.ok) throw new Error("Failed to create enquiry");
+      if (!enquiryRes.ok) {
+        // A1: surface the server's real message (e.g. validation errors)
+        setError(await serverErrorOr(enquiryRes, "Something went wrong. Please try again or use Enquire."));
+        setPayNowLoading(false);
+        return;
+      }
       const enquiryData = await enquiryRes.json();
-      const leadPortalToken = enquiryData.portalToken;
+      leadPortalToken = enquiryData.portalToken ?? null;
+      leadId = enquiryData.leadId ?? null;
 
       // Step 2: Create PayPal order
       const orderRes = await fetch("/api/payment/create-order", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          leadId: null, // token-based lookup
+          leadId, // server also marks payment_failed on failure when present
           listingId,
           checkIn,
           checkOut,
@@ -240,16 +286,48 @@ export function PropertyBookingSection({
           portalToken: leadPortalToken,
         }),
       });
-      if (!orderRes.ok) throw new Error("Failed to create PayPal order");
+      if (!orderRes.ok) {
+        // A1: show the server's reason (e.g. "Minimum stay is 3 nights for
+        // these dates"); A4: the lead exists — payment didn't complete.
+        const serverMsg = await serverErrorOr(orderRes, "");
+        paymentFailedAfterLead = true;
+        setError(
+          (serverMsg || "Something went wrong. Please try again or use Enquire.") +
+            " Your enquiry was received \u2014 payment didn\u2019t complete, we\u2019ll send a secure payment link."
+        );
+        setPayNowLoading(false);
+        return;
+      }
       const orderData = await orderRes.json();
 
-      if (!orderData.approveUrl) throw new Error("No PayPal redirect URL");
+      if (!orderData.approveUrl) {
+        paymentFailedAfterLead = true;
+        setError("Payment couldn\u2019t be started. Your enquiry was received \u2014 payment didn\u2019t complete, we\u2019ll send a secure payment link.");
+        setPayNowLoading(false);
+        return;
+      }
 
       // Step 3: Redirect to PayPal hosted checkout
       window.location.href = orderData.approveUrl;
     } catch (err) {
       console.error("[pay-now]", err);
-      setError("Something went wrong. Please try again or use Enquire.");
+      // A4: network-level failure after the lead was created — best-effort
+      // server-side marking (replay-safe), then reassure the guest.
+      if (leadPortalToken) {
+        paymentFailedAfterLead = true;
+        try {
+          await fetch("/api/payment/create-order", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ leadId, listingId, portalToken: leadPortalToken, forceFailureMark: true }),
+          });
+        } catch { /* best-effort only */ }
+      }
+      setError(
+        paymentFailedAfterLead
+          ? "Your enquiry was received \u2014 payment didn\u2019t complete, we\u2019ll send a secure payment link."
+          : "Something went wrong. Please try again or use Enquire."
+      );
       setPayNowLoading(false);
     }
   }
@@ -363,12 +441,18 @@ export function PropertyBookingSection({
           {step === "dates" && (
             <>
               <button
-                onClick={() => { if (checkIn && checkOut) setStep("enquiry"); }}
-                disabled={!checkIn || !checkOut}
+                onClick={() => { if (checkIn && checkOut && !minStayNotMet) setStep("enquiry"); }}
+                disabled={!checkIn || !checkOut || minStayNotMet}
                 className="w-full rounded-full bg-stone-950 py-3 text-sm font-medium text-stone-50 hover:bg-stone-800 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 {checkIn && checkOut ? "Reserve" : "Select dates to reserve"}
               </button>
+              {/* A2: live min-stay cue — early client warning; server check is authoritative */}
+              {minStayNotMet && (
+                <p className="text-center text-xs text-amber-600">
+                  Minimum stay is {minimumStay} night{minimumStay !== 1 ? "s" : ""} for this property
+                </p>
+              )}
               <p className="mt-2 text-center text-xs text-stone-400">You won&apos;t be charged yet</p>
             </>
           )}
@@ -380,8 +464,34 @@ export function PropertyBookingSection({
                 className="w-full rounded-xl border border-stone-200 px-3 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-stone-400" />
               <input required type="email" placeholder="Email address" value={email} onChange={e => setEmail(e.target.value)}
                 className="w-full rounded-xl border border-stone-200 px-3 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-stone-400" />
-              <input required type="tel" placeholder="Phone number" value={phone} onChange={e => setPhone(e.target.value)}
-                className="w-full rounded-xl border border-stone-200 px-3 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-stone-400" />
+              <div className="flex gap-2">
+                <label className="sr-only" htmlFor="phone-dial">Country code</label>
+                <select
+                  id="phone-dial"
+                  value={phoneDial}
+                  onChange={e => setPhoneDial(e.target.value)}
+                  className="rounded-xl border border-stone-200 px-2 py-2.5 text-sm text-stone-800 focus:outline-none focus:ring-1 focus:ring-stone-400"
+                >
+                  {DIAL_CODES.map(d => (
+                    <option key={d.dial + d.country} value={d.dial}>
+                      {d.country} {d.dial}
+                    </option>
+                  ))}
+                </select>
+                <label className="sr-only" htmlFor="phone-local">Phone number</label>
+                <input
+                  id="phone-local"
+                  required
+                  type="tel"
+                  inputMode="tel"
+                  placeholder="412 345 678"
+                  value={phoneLocal}
+                  onChange={e => setPhoneLocal(e.target.value)}
+                  aria-invalid={!!phoneError}
+                  className="w-full rounded-xl border border-stone-200 px-3 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-stone-400"
+                />
+              </div>
+              {phoneError && <p className="text-xs text-red-500">{phoneError}</p>}
               <textarea placeholder="Any questions or special requests?" value={message} onChange={e => setMessage(e.target.value)} rows={3}
                 className="w-full rounded-xl border border-stone-200 px-3 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-stone-400" />
               {error && <p className="text-xs text-red-500">{error}</p>}
@@ -391,7 +501,7 @@ export function PropertyBookingSection({
                 <button
                   type="button"
                   onClick={handleSubmit}
-                  disabled={submitting || payNowLoading || !name || !email}
+                  disabled={submitting || payNowLoading || !name || !email || !phoneValid}
                   className="rounded-full border border-stone-300 bg-white py-3 text-sm font-medium text-stone-800 hover:bg-stone-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   {submitting ? "Sending…" : "Enquire"}
@@ -399,7 +509,7 @@ export function PropertyBookingSection({
                 <button
                   type="button"
                   onClick={handlePayNow}
-                  disabled={payNowLoading || submitting || !name || !email || total <= 0}
+                  disabled={payNowLoading || submitting || !name || !email || !phoneValid || total <= 0}
                   className="rounded-full bg-[#003087] py-3 text-sm font-medium text-white hover:bg-[#002266] transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
                 >
                   {payNowLoading ? (

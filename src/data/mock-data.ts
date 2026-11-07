@@ -33,6 +33,8 @@ export type Property = {
   checkOutTime?: number;
   listingBedTypes?: Array<{ bedTypeId: number; quantity: number; bedroomNumber: number }>;
   publicDescription?: string;
+  /** Listing-level default minimum stay (nights) from Hostaway — client-side early cue only; server check is authoritative. */
+  minimumStay?: number;
 };
 
 export const properties: Property[] = [
