@@ -2,7 +2,7 @@ import { SimpleForm } from "@/components/forms/simple-form";
 import { SectionHeading } from "@/components/sections/section-heading";
 
 export const metadata = {
-  title: "Book Your Melbourne Stay | Direct Booking | La Maison Homes",
+  title: "Book Your Melbourne Stay | Direct Booking",
   description:
     "Book your Melbourne stay direct with La Maison Homes. Skip the platform fees, get the best rate guaranteed, and enjoy secure PayPal payment with instant confirmation.",
 };
