@@ -70,6 +70,7 @@ function StaysContent() {
   });
   const [suburbQuery, setSuburbQuery] = useState("");
   const [showPredictions, setShowPredictions] = useState(false);
+  const [suburbLimitNotice, setSuburbLimitNotice] = useState(false);
   const [highlightedPrediction, setHighlightedPrediction] = useState(0);
   const suburbInputRef = useRef<HTMLInputElement>(null);
   const predictionsRef = useRef<HTMLDivElement>(null);
@@ -116,7 +117,13 @@ function StaysContent() {
   }, []);
 
   function addSuburb(name: string) {
-    setSuburbs((prev) => (prev.includes(name) || prev.length >= 5 ? prev : [...prev, name]));
+    if (suburbs.includes(name)) return;
+    if (suburbs.length >= 5) {
+      setSuburbLimitNotice(true);
+      return;
+    }
+    setSuburbLimitNotice(false);
+    setSuburbs((prev) => [...prev, name]);
     setSuburbQuery("");
     setShowPredictions(false);
     suburbInputRef.current?.focus();
@@ -374,6 +381,12 @@ function StaysContent() {
                     </span>
                   ))}
                 </div>
+              )}
+              {suburbs.length >= 5 && (
+                <p className="mt-1 text-xs text-stone-400">Up to 5 suburbs — remove one to add another.</p>
+              )}
+              {suburbLimitNotice && suburbs.length >= 5 && (
+                <p className="mt-1 text-xs text-amber-600" role="status">Suburb limit reached (5) — remove a chip above to add another.</p>
               )}
             </div>
           </div>
