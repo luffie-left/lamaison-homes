@@ -47,10 +47,10 @@ async function markLeadPaymentFailed(
         },
         body: JSON.stringify({
           payment_status: 'payment_failed',
-          // Append to notes is not atomic; keep an explicit audit field instead.
-          // TODO(live): verify the `payment_failed_reason` column exists in the
-          // leads table (see sql-schema) — drop this field if it doesn't.
-          payment_failed_reason: reason.slice(0, 200),
+          // NOTE(A4): `payment_failed_reason` column not yet in schema — intentionally
+          // omitted so this PATCH can't 400 and lose the status update. Add when
+          // the column exists (see TODO in docs/sql-schema).
+          // payment_failed_reason: reason.slice(0, 200),
         }),
       }
     )
