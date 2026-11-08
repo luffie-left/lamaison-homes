@@ -255,8 +255,10 @@ export async function GET() {
         };
         return {
           ...stay,
-          heroImage: stay.heroImage || ha.hero,
-          gallery: stay.gallery.length ? stay.gallery : ha.gallery,
+          // Hostaway S3 URLs are signed/rotated — stored photos go stale
+          // (403). Prefer LIVE Hostaway images; stored only as fallback.
+          heroImage: ha.hero || stay.heroImage,
+          gallery: ha.gallery.length ? ha.gallery : stay.gallery,
           startingPrice: stay.startingPrice > 0 ? stay.startingPrice : ha.price,
           cleaningFee: (stay.cleaningFee ?? 0) > 0 ? stay.cleaningFee : ha.cleaningFee,
           lat: (stay as Property).lat ?? ha.lat,

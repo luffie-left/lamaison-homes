@@ -105,6 +105,7 @@ export async function POST(req: NextRequest) {
     draftsUpdated: report.draftsUpdated,
     publishedFlagged: report.publishedFlagged,
     deactivatedDrafts: report.deactivatedDrafts,
+    heroCollisions: report.heroCollisions,
     errors: report.errors,
   }));
 

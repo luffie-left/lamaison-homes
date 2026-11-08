@@ -236,8 +236,11 @@ export async function GET(
       stay: {
         ...hostawayStay,
         slug: stay.slug,
-        heroImage: stay.heroImage || hostawayStay.heroImage,
-        gallery: stay.gallery.length ? stay.gallery : hostawayStay.gallery,
+        // Hostaway S3 URLs are signed/rotated — stored Supabase photos go
+        // stale (403). Always prefer LIVE Hostaway images; stored gallery is
+        // only a last-resort fallback when Hostaway returns none.
+        heroImage: hostawayStay.heroImage || stay.heroImage,
+        gallery: hostawayStay.gallery.length ? hostawayStay.gallery : stay.gallery,
         descriptionLong: stay.descriptionLong || hostawayStay.descriptionLong,
         descriptionShort: stay.descriptionShort || hostawayStay.descriptionShort,
         houseRules: stay.houseRules.length ? stay.houseRules : hostawayStay.houseRules,
