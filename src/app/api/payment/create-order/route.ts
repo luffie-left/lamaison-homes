@@ -32,6 +32,7 @@ const SERVICE_KEY = (process.env.SUPABASE_SERVICE_ROLE_KEY ?? '').replace(/\n/g,
 async function markLeadPaymentFailed(
   leadId: string,
   portalToken: string,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   _reason: string
 ): Promise<void> {
   try {
