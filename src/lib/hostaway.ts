@@ -191,5 +191,7 @@ export function mapToProperty(listing: HostawayListing): Property {
     checkInTime: listing.checkInTime,
     checkOutTime: listing.checkOutTime,
     listingBedTypes: listing.listingBedTypes ?? [],
+    // A2: client-side min-stay early cue — server (quote/create-order) stays authoritative
+    minimumStay: typeof listing.minimumStay === "number" && listing.minimumStay > 0 ? listing.minimumStay : undefined,
   };
 }

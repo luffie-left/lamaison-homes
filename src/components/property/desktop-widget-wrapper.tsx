@@ -7,10 +7,12 @@ export function DesktopWidgetWrapper({
   listingId,
   nightlyRate,
   cleaningFee,
+  minimumStay,
 }: {
   listingId: number;
   nightlyRate: number;
   cleaningFee: number;
+  minimumStay?: number;
 }) {
   const [checkIn, setCheckIn] = useState<string | undefined>(undefined);
   const [checkOut, setCheckOut] = useState<string | undefined>(undefined);
@@ -39,6 +41,7 @@ export function DesktopWidgetWrapper({
         listingId={listingId}
         nightlyRate={nightlyRate}
         cleaningFee={cleaningFee}
+        minimumStay={minimumStay}
         checkInDate={checkIn}
         checkOutDate={checkOut}
       />

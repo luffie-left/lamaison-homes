@@ -16,6 +16,52 @@ export const dynamic = 'force-dynamic'
 
 const SUPABASE_URL = (process.env.NEXT_PUBLIC_SUPABASE_URL ?? '').replace(/\n/g, '')
 const SERVICE_KEY = (process.env.SUPABASE_SERVICE_ROLE_KEY ?? '').replace(/\n/g, '')
+
+/**
+ * Mark a lead's payment_status as 'payment_failed' (A4, additive + replay-safe).
+ *
+ * Guarantees:
+ *  - Only ever downgrades terminal-safe states: guarded to rows currently in
+ *    payment_status 'pending' or 'unpaid' — it can never touch 'paid' or
+ *    'processing' (capture in flight), so replays and races are harmless.
+ *  - Token-scoped (portal_token must match), so the caller must already have
+ *    proven ownership of the lead.
+ *  - Never throws — status marking is best-effort and must not mask the
+ *    original create-order error returned to the guest.
+ */
+async function markLeadPaymentFailed(
+  leadId: string,
+  portalToken: string,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  _reason: string
+): Promise<void> {
+  try {
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/leads?id=eq.${encodeURIComponent(leadId)}&portal_token=eq.${encodeURIComponent(portalToken)}&payment_status=in.(pending,unpaid)`,
+      {
+        method: 'PATCH',
+        headers: {
+          apikey: SERVICE_KEY,
+          Authorization: `Bearer ${SERVICE_KEY}`,
+          'Content-Type': 'application/json',
+          Prefer: 'return=minimal',
+        },
+        body: JSON.stringify({
+          payment_status: 'payment_failed',
+          // NOTE(A4): `payment_failed_reason` column not yet in schema — intentionally
+          // omitted so this PATCH can't 400 and lose the status update. Add when
+          // the column exists (see TODO in docs/sql-schema).
+          // payment_failed_reason: reason.slice(0, 200),
+        }),
+      }
+    )
+    if (!res.ok) {
+      console.error('[create-order] markLeadPaymentFailed failed:', await res.text())
+    }
+  } catch (err) {
+    console.error('[create-order] markLeadPaymentFailed error:', err)
+  }
+}
 // Keep sandbox callbacks on their Vercel preview instead of sending a test
 // buyer to the public site's (potentially different) deployed checkout code.
 const SITE_URL = (
@@ -25,15 +71,24 @@ const SITE_URL = (
 ).replace(/\n/g, '')
 
 export async function POST(req: NextRequest) {
+  // Hoisted so the catch block can read portalToken/leadId for A4 failure marking.
+  let body: Record<string, unknown> | null = null
   try {
-    const body = await req.json()
+    body = (await req.json()) as Record<string, unknown>
+    const bodyObj = body
     const {
       leadId,
       listingId,
       nights,
       propertyName,
       portalToken,
-    } = body
+    }: {
+      leadId?: string | null
+      listingId?: number
+      nights?: number
+      propertyName?: string
+      portalToken?: string
+    } = bodyObj
 
     // --- Validate required fields ---
     // Pay Now creates the enquiry immediately before this call and authenticates
@@ -159,6 +214,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ orderId, approveUrl })
   } catch (err) {
     if (err instanceof BookabilityError) {
+      // A4: a freshly created lead (Pay Now flow) should not stay 'pending' —
+      // mark payment_failed (replay-safe; never touches paid/processing).
+      const token = typeof body?.portalToken === 'string' ? body.portalToken : ''
+      const leadId = typeof body?.leadId === 'string' ? body.leadId : null
+      if (token && leadId) {
+        await markLeadPaymentFailed(leadId, token, `create-order: ${err.code}`)
+      }
       return NextResponse.json({ error: err.message, code: err.code }, { status: err.status })
     }
     console.error('[create-order] Error:', err)

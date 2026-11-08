@@ -1,6 +1,13 @@
 "use client";
 
 import { useState } from "react";
+import {
+  DIAL_CODES,
+  DEFAULT_DIAL_CODE,
+  composeE164,
+  isValidE164,
+} from "@/lib/phone";
+import { serverErrorOr } from "@/lib/client-error";
 
 type QuoteResult = {
   nights: number;
@@ -8,6 +15,8 @@ type QuoteResult = {
   cleaningFee: number;
   subtotal: number;
   currency: string;
+  /** Server-confirmed listing default (quote response) — A2 cue only. */
+  minStay?: number;
 };
 
 type Step = "dates" | "quote" | "guest-details" | "redirecting" | "enquiry" | "confirmed";
@@ -26,6 +35,7 @@ export function BookingWidget({
   propertyName,
   nightlyRate,
   cleaningFee = 0,
+  minimumStay,
   checkInDate,
   checkOutDate,
 }: {
@@ -33,6 +43,8 @@ export function BookingWidget({
   propertyName?: string;
   nightlyRate: number;
   cleaningFee?: number;
+  /** Listing-level default min stay (A2 cue — server check stays authoritative). */
+  minimumStay?: number;
   checkInDate?: string | null;
   checkOutDate?: string | null;
 }) {
@@ -47,7 +59,10 @@ export function BookingWidget({
   // Guest details (for Reserve flow)
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
+  // A3: dial code + local number, submitted as E.164 (+61412345678)
+  const [phoneDial, setPhoneDial] = useState(DEFAULT_DIAL_CODE);
+  const [phoneLocal, setPhoneLocal] = useState("");
+  const phone = composeE164(phoneDial, phoneLocal); // null until plausible
   const [messageText, setMessageText] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
@@ -67,6 +82,24 @@ export function BookingWidget({
           )
         )
       : 0;
+
+  // A2: live min-stay cue — server (quote/create-order) stays authoritative.
+  // Prefer the server-confirmed minStay from a fresh quote, else listing default.
+  const effectiveMinStay =
+    (typeof quote?.minStay === "number" && quote.minStay > 0
+      ? quote.minStay
+      : typeof minimumStay === "number" && minimumStay > 0
+        ? minimumStay
+        : null);
+  const minStayNotMet =
+    effectiveMinStay !== null && nights > 0 && nights < effectiveMinStay;
+
+  // A3: full E.164 number ready to submit?
+  const phoneValid = phone !== null && isValidE164(phone);
+  const phoneError =
+    phoneLocal.length > 0 && !phoneValid
+      ? "Enter a valid phone number (7\u201315 digits after the country code)"
+      : null;
 
   // ─── Step 1: Fetch quote + check availability ──────────────────────────────
   async function handleCheckAvailability(e: React.FormEvent) {
@@ -94,6 +127,8 @@ export function BookingWidget({
 
       const quoteData = await quoteRes.json();
       if (!quoteRes.ok || quoteData.error) {
+        // A1: quoteRes errors already surface the server message (e.g.
+        // "Minimum stay is 3 nights for these dates"); keep a safe fallback.
         setError(quoteData.error ?? "Could not calculate quote.");
         return;
       }
@@ -126,9 +161,13 @@ export function BookingWidget({
   // ─── Step 3: Create lead + PayPal order + redirect ─────────────────────────
   async function handlePaymentSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!quote) return;
+    if (!quote || !phoneValid || !phone) {
+      if (!phoneValid) setError("Enter a valid phone number (7\u201315 digits after the country code)");
+      return;
+    }
     setError(null);
     setSubmitting(true);
+    let paymentFailedAfterLead = false;
 
     try {
       // 3a. Create booking draft (lead) in Supabase
@@ -179,8 +218,21 @@ export function BookingWidget({
       });
 
       const orderData = await orderRes.json();
-      if (!orderRes.ok || orderData.error) {
-        setError(orderData.error ?? "Failed to create payment order. Please try again or use enquiry.");
+      if (!orderRes.ok) {
+        // A1: surface the server's real reason (e.g. MIN_STAY_NOT_MET message,
+        // pricing-changed guard). A4: the lead was already created — payment
+        // didn’t complete, so reassure the guest that the enquiry is safe.
+        paymentFailedAfterLead = true;
+        setError(
+          (await serverErrorOr(orderRes, "")) ||
+            "Failed to create payment order. Please try again or use enquiry." +
+              " Your enquiry was received — payment didn’t complete, we’ll send a secure payment link."
+        );
+        return;
+      }
+      if (orderData.error) {
+        paymentFailedAfterLead = true;
+        setError(orderData.error);
         return;
       }
 
@@ -188,7 +240,14 @@ export function BookingWidget({
       setStep("redirecting");
       window.location.href = orderData.approveUrl;
     } catch {
-      setError("Something went wrong. Please try again.");
+      // A4: network-level failure after the lead was created — the lead is
+      // safe; reassure the guest. Server-side marking happens in the
+      // create-order failure path where possible.
+      setError(
+        paymentFailedAfterLead
+          ? "Your enquiry was received \u2014 payment didn\u2019t complete, we\u2019ll send a secure payment link."
+          : "Something went wrong. Please try again."
+      );
       setSubmitting(false);
     }
   }
@@ -196,6 +255,10 @@ export function BookingWidget({
   // ─── Enquiry-only fallback (no payment) ───────────────────────────────────
   async function handleEnquirySubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (!phoneValid || !phone) {
+      setError("Enter a valid phone number (7\u201315 digits after the country code)");
+      return;
+    }
     setError(null);
     setEnquirySubmitting(true);
     try {
@@ -229,6 +292,43 @@ export function BookingWidget({
     } finally {
       setEnquirySubmitting(false);
     }
+  }
+
+  // Reusable phone field (A3): country-code select + local number, stored E.164
+  function renderPhoneField(idPrefix: string) {
+    return (
+      <div>
+        <label className="mb-1 block text-xs font-medium text-stone-500">Phone *</label>
+        <div className="flex gap-2">
+          <label className="sr-only" htmlFor={`${idPrefix}-dial`}>Country code</label>
+          <select
+            id={`${idPrefix}-dial`}
+            value={phoneDial}
+            onChange={(e) => setPhoneDial(e.target.value)}
+            className="rounded-xl border border-stone-200 bg-white px-2 py-2.5 text-sm text-stone-900 focus:outline-none focus:ring-2 focus:ring-stone-950"
+          >
+            {DIAL_CODES.map((d) => (
+              <option key={d.dial + d.country} value={d.dial}>
+                {d.country} {d.dial}
+              </option>
+            ))}
+          </select>
+          <label className="sr-only" htmlFor={`${idPrefix}-local`}>Phone number</label>
+          <input
+            id={`${idPrefix}-local`}
+            required
+            type="tel"
+            inputMode="tel"
+            placeholder="412 345 678"
+            value={phoneLocal}
+            onChange={(e) => setPhoneLocal(e.target.value)}
+            aria-invalid={!!phoneError}
+            className="w-full rounded-xl border border-stone-200 bg-white px-3 py-2.5 text-sm text-stone-900 focus:outline-none focus:ring-2 focus:ring-stone-950"
+          />
+        </div>
+        {phoneError && <p className="mt-1 text-xs text-red-600">{phoneError}</p>}
+      </div>
+    );
   }
 
   // ─── Redirecting screen ────────────────────────────────────────────────────
@@ -267,7 +367,7 @@ export function BookingWidget({
             setGuests(2);
             setName("");
             setEmail("");
-            setPhone("");
+            setPhoneLocal("");
             setMessageText("");
             setShowEnquiry(false);
           }}
@@ -328,17 +428,7 @@ export function BookingWidget({
               className="w-full rounded-xl border border-stone-200 bg-white px-3 py-2.5 text-sm text-stone-900 focus:outline-none focus:ring-2 focus:ring-stone-950"
             />
           </div>
-          <div>
-            <label className="mb-1 block text-xs font-medium text-stone-500">Phone *</label>
-            <input
-              required
-              type="tel"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              placeholder="+61 4xx xxx xxx"
-              className="w-full rounded-xl border border-stone-200 bg-white px-3 py-2.5 text-sm text-stone-900 focus:outline-none focus:ring-2 focus:ring-stone-950"
-            />
-          </div>
+          {renderPhoneField("pay")}
           <div>
             <label className="mb-1 block text-xs font-medium text-stone-500">Special requests (optional)</label>
             <textarea
@@ -356,7 +446,7 @@ export function BookingWidget({
 
           <button
             type="submit"
-            disabled={submitting}
+            disabled={submitting || !phoneValid}
             className="w-full rounded-xl bg-stone-950 px-5 py-3 text-sm font-semibold text-white disabled:opacity-60 hover:bg-stone-800 transition-colors"
           >
             {submitting ? "Processing…" : `Pay ${quote ? fmt(quote.subtotal) : ""} via PayPal`}
@@ -524,11 +614,19 @@ export function BookingWidget({
           <p className="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p>
         )}
 
+        {/* A2: live min-stay cue — client-side early warning; server stays authoritative */}
+        {minStayNotMet && (
+          <p className="rounded-xl bg-amber-50 px-3 py-2 text-sm text-amber-700">
+            Minimum stay is {effectiveMinStay} night{effectiveMinStay !== 1 ? "s" : ""} for these dates — please extend your stay.
+          </p>
+        )}
+
         {step === "quote" ? (
           <button
             type="button"
             onClick={handleReserveClick}
-            className="w-full rounded-xl bg-stone-950 px-5 py-3 text-sm font-semibold text-white hover:bg-stone-800 transition-colors"
+            disabled={minStayNotMet}
+            className="w-full rounded-xl bg-stone-950 px-5 py-3 text-sm font-semibold text-white hover:bg-stone-800 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
           >
             Reserve — pay via PayPal
           </button>
@@ -569,12 +667,7 @@ export function BookingWidget({
                 placeholder="you@example.com"
                 className="w-full rounded-xl border border-stone-200 bg-white px-3 py-2.5 text-sm text-stone-900 focus:outline-none focus:ring-2 focus:ring-stone-950" />
             </div>
-            <div>
-              <label className="mb-1 block text-xs font-medium text-stone-500">Phone *</label>
-              <input required type="tel" value={phone} onChange={(e) => setPhone(e.target.value)}
-                placeholder="+61 4xx xxx xxx"
-                className="w-full rounded-xl border border-stone-200 bg-white px-3 py-2.5 text-sm text-stone-900 focus:outline-none focus:ring-2 focus:ring-stone-950" />
-            </div>
+            {renderPhoneField("enq")}
             <div>
               <label className="mb-1 block text-xs font-medium text-stone-500">Message (optional)</label>
               <textarea value={messageText} onChange={(e) => setMessageText(e.target.value)}
@@ -585,7 +678,7 @@ export function BookingWidget({
             {error && (
               <p className="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p>
             )}
-            <button type="submit" disabled={enquirySubmitting}
+            <button type="submit" disabled={enquirySubmitting || !phoneValid}
               className="w-full rounded-xl bg-stone-950 px-5 py-3 text-sm font-semibold text-white disabled:opacity-60 hover:bg-stone-800 transition-colors">
               {enquirySubmitting ? "Submitting…" : "Submit enquiry"}
             </button>
