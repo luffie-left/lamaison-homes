@@ -72,6 +72,14 @@ export type HostawayListing = {
     bedroomNumber: number;
   }>;
   amenities: string[];
+  /** Raw amenity objects (includeResources=1) — name + presence. */
+  listingAmenities?: Array<{ amenityName?: string; isPresent?: number }>;
+  state?: string;
+  country?: string;
+  description?: string;
+  airbnbSummary?: string;
+  currencyCode?: string;
+  checkInTimeStart?: number;
   status: string; // 'active' | 'inactive' | 'archived' | ... (see isHostawayListingEligible)
   /**
    * Hostaway "current listing" special status. Observed live values:
