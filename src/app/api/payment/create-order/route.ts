@@ -32,7 +32,7 @@ const SERVICE_KEY = (process.env.SUPABASE_SERVICE_ROLE_KEY ?? '').replace(/\n/g,
 async function markLeadPaymentFailed(
   leadId: string,
   portalToken: string,
-  reason: string
+  _reason: string
 ): Promise<void> {
   try {
     const res = await fetch(
