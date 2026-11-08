@@ -62,6 +62,7 @@ export interface SyncReport {
   }>;
   deactivatedDrafts: number;
   skippedIneligible: number[];
+  heroCollisions: Array<{ listingId: number; collidesWith: number }>;
   errors: string[];
 }
 
@@ -201,6 +202,7 @@ export async function runListingSync(deps: SyncDeps): Promise<SyncReport> {
     flagged: [],
     deactivatedDrafts: 0,
     skippedIneligible: [],
+    heroCollisions: [],
     errors: [],
   };
 
@@ -211,6 +213,24 @@ export async function runListingSync(deps: SyncDeps): Promise<SyncReport> {
   const byId = new Map(rows.map((r) => [r.hostaway_listing_id, r]));
   const eligible = listings.filter((l) => isHostawayListingEligible(l));
   const eligibleIds = new Set(eligible.map((l) => l.id));
+
+  // Hero-uniqueness invariant: a listing's first (sortOrder) photo must not
+  // equal another listing's hero. Cross-listing collisions are flagged for
+  // review — never silently imported/published.
+  const heroByUrl = new Map<string, number>(); // url → first listingId
+  for (const l of eligible) {
+    const sorted = (l.listingImages ?? [])
+      .slice()
+      .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
+    const hero = sorted[0]?.url;
+    if (!hero) continue;
+    const prev = heroByUrl.get(hero);
+    if (prev !== undefined) {
+      report.heroCollisions.push({ listingId: l.id, collidesWith: prev });
+    } else {
+      heroByUrl.set(hero, l.id);
+    }
+  }
 
   for (const l of eligible) {
     const row = byId.get(l.id);

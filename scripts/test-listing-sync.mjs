@@ -126,5 +126,32 @@ t("deactivates local draft when Hostaway ineligible/missing", async () => {
   assert.equal(rows.get(572300).is_active, false);
 });
 
+
+console.log("hero uniqueness");
+const lA = { ...fakeListing, id: 111, listingImages: [{ url: "heroX", sortOrder: 1 }] };
+const lB = { ...fakeListing, id: 222, listingImages: [{ url: "heroX", sortOrder: 1 }] };
+t("flags hero collision between two listings", async () => {
+  const r = await runListingSync({
+    fetchListings: async () => [lA, lB],
+    fetchRows: async () => [],
+    insertDraft: async () => true,
+    updateDraft: async () => true,
+    deactivateDraft: async () => true,
+  });
+  assert.equal(r.heroCollisions.length, 1);
+  assert.equal(r.heroCollisions[0].collidesWith, 111);
+  assert.equal(r.heroCollisions[0].listingId, 222);
+});
+t("no collision when heroes differ", async () => {
+  const r = await runListingSync({
+    fetchListings: async () => [lA, { ...lB, listingImages: [{ url: "heroY", sortOrder: 1 }] }],
+    fetchRows: async () => [],
+    insertDraft: async () => true,
+    updateDraft: async () => true,
+    deactivateDraft: async () => true,
+  });
+  assert.equal(r.heroCollisions.length, 0);
+});
+
 console.log(`${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
