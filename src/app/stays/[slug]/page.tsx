@@ -423,6 +423,7 @@ export default async function PropertyPage({
                 nightlyRate={property.startingPrice}
                 cleaningFee={property.cleaningFee ?? 0}
                 minimumStay={property.minimumStay}
+                propertyName={property.title}
               />
             </div>
           </aside>

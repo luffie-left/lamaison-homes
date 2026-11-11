@@ -19,7 +19,7 @@ function nightsBetween(a: string | null, b: string | null): number | null {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { name, email, phone, listingId, checkIn, checkOut, guests, message, propertyName, total, nightlyRate, cleaningFee } = body;
+    const { name, email, phone, listingId, checkIn, checkOut, guests, message, propertyName, total, nightlyRate, cleaningFee, tncAcceptedAt, tncVersion } = body;
 
     if (!name || !email || !listingId || !phone) {
       return NextResponse.json({ error: "name, email, phone, and listingId are required" }, { status: 400 });
@@ -64,6 +64,11 @@ export async function POST(req: NextRequest) {
         total_amount: total ? Number(total) : null,
         nightly_rate: nightlyRate ? Number(nightlyRate) : null,
         cleaning_fee: cleaningFee ? Number(cleaningFee) : null,
+        // UX-TNC: audit trail for guest T&C acceptance (blocking checkbox on the
+        // review step). Values come from the client; the server never fabricates
+        // an acceptance timestamp. Enquire-only leads omit them (null).
+        tnc_accepted_at: tncAcceptedAt ?? null,
+        tnc_version: tncAcceptedAt ? (tncVersion ?? null) : null,
       }),
     });
 

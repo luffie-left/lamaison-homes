@@ -100,8 +100,9 @@ import {
   isValidE164,
 } from "@/lib/phone";
 import { serverErrorOr } from "@/lib/client-error";
+import { TNC_VERSION, TNC_URL } from "@/lib/tnc";
 
-type Step = "dates" | "enquiry" | "confirmed";
+type Step = "dates" | "enquiry" | "review" | "confirmed";
 
 function fmt(n: number) {
   return new Intl.NumberFormat("en-AU", { style: "currency", currency: "AUD", minimumFractionDigits: 0 }).format(n);
@@ -122,6 +123,7 @@ export function PropertyBookingSection({
   nightlyRate,
   cleaningFee,
   minimumStay,
+  propertyName,
 }: {
   slug: string;
   listingId: number;
@@ -129,6 +131,8 @@ export function PropertyBookingSection({
   cleaningFee: number;
   /** Listing-level default min stay (A2 cue — server check stays authoritative). */
   minimumStay?: number;
+  /** Listing display name for the review-step summary. */
+  propertyName?: string;
 }) {
   const [blockedDates, setBlockedDates] = useState<Set<string>>(new Set());
   const [calLoading, setCalLoading] = useState(true);
@@ -155,6 +159,9 @@ export function PropertyBookingSection({
   const [error, setError] = useState<string | null>(null);
   const [bookingRef, setBookingRef] = useState<string | null>(null);
   const [portalToken, setPortalToken] = useState<string | null>(null);
+  // UX-TNC: acceptance timestamp recorded when the guest ticks the box
+  const [tncAccepted, setTncAccepted] = useState(false);
+  const [tncAcceptedAt, setTncAcceptedAt] = useState<string | null>(null);
 
   const checkIn = selectedStart ? format(selectedStart, "yyyy-MM-dd") : null;
   const checkOut = selectedEnd ? format(selectedEnd, "yyyy-MM-dd") : null;
@@ -242,7 +249,7 @@ export function PropertyBookingSection({
   // Pay Now — creates enquiry then immediately redirects to PayPal
   async function handlePayNow(e: React.FormEvent) {
     e.preventDefault();
-    if (!phoneValid || !phone) return;
+    if (!phoneValid || !phone || !tncAccepted || !tncAcceptedAt) return;
     setPayNowLoading(true);
     setError(null);
     // A4: once the enquiry is created we have a lead + portal token; if payment
@@ -259,6 +266,8 @@ export function PropertyBookingSection({
           name, email, phone, listingId, checkIn, checkOut, guests, message,
           total: total > 0 ? total : null, nightlyRate, cleaningFee,
           propertyName: undefined, // filled by API from listing
+          tncAcceptedAt,
+          tncVersion: TNC_VERSION,
         }),
       });
       if (!enquiryRes.ok) {
@@ -500,14 +509,14 @@ export function PropertyBookingSection({
                 </button>
                 <button
                   type="button"
-                  onClick={handlePayNow}
+                  onClick={() => setStep("review")}
                   disabled={payNowLoading || submitting || !name || !email || !phoneValid || total <= 0}
                   className="rounded-full bg-[#003087] py-3 text-sm font-medium text-white hover:bg-[#002266] transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
                 >
                   {payNowLoading ? (
                     <><span className="w-3.5 h-3.5 border border-white/40 border-t-white rounded-full animate-spin" /> Processing…</>
                   ) : (
-                    <>Pay {fmt(total)}</>
+                    <>Continue to payment</>
                   )}
                 </button>
               </div>
@@ -529,6 +538,92 @@ export function PropertyBookingSection({
                 ← Back to dates
               </button>
             </form>
+          )}
+
+          {step === "review" && (
+            <div className="space-y-4">
+              <p className="text-sm font-medium text-stone-800">Review your booking</p>
+
+              {/* Itemized order summary (a11y: labelled region) */}
+              <dl className="space-y-2 text-sm border-t border-stone-100 pt-4" aria-label="Order summary">
+                <div className="flex justify-between gap-4">
+                  <dt className="text-stone-500">Stay</dt>
+                  <dd className="font-medium text-stone-900 text-right">{propertyName ?? `Listing #${listingId}`}</dd>
+                </div>
+                <div className="flex justify-between gap-4">
+                  <dt className="text-stone-500">Check-in</dt>
+                  <dd className="font-medium text-stone-900">{checkIn}</dd>
+                </div>
+                <div className="flex justify-between gap-4">
+                  <dt className="text-stone-500">Check-out</dt>
+                  <dd className="font-medium text-stone-900">{checkOut}</dd>
+                </div>
+                <div className="flex justify-between gap-4">
+                  <dt className="text-stone-500">Guests</dt>
+                  <dd className="font-medium text-stone-900">{guests} guest{guests !== 1 ? "s" : ""}</dd>
+                </div>
+                <div className="flex justify-between text-stone-600">
+                  <dt>{fmt(nightlyRate)} × {nights} night{nights !== 1 ? "s" : ""}</dt>
+                  <dd>{fmt(nightlyRate * nights)}</dd>
+                </div>
+                <div className="flex justify-between text-stone-600">
+                  <dt>Cleaning fee</dt>
+                  <dd>{fmt(cleaningFee)}</dd>
+                </div>
+                <div className="flex justify-between font-semibold text-stone-900 border-t border-stone-100 pt-2">
+                  <dt>Total</dt>
+                  <dd>{fmt(total)}</dd>
+                </div>
+              </dl>
+
+              {/* Blocking T&C acceptance (a11y: explicit label association) */}
+              <div className="flex items-start gap-2.5">
+                <input
+                  id="tnc-accept"
+                  type="checkbox"
+                  required
+                  checked={tncAccepted}
+                  onChange={e => {
+                    setTncAccepted(e.target.checked);
+                    if (e.target.checked && !tncAcceptedAt) setTncAcceptedAt(new Date().toISOString());
+                  }}
+                  aria-describedby="tnc-accept-note"
+                  className="mt-0.5 h-4 w-4 shrink-0 rounded border-stone-300 text-stone-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-stone-500"
+                />
+                <label htmlFor="tnc-accept" className="text-xs leading-6 text-stone-600">
+                  I have read and accept the{" "}
+                  <a href={TNC_URL} target="_blank" rel="noopener noreferrer" className="text-[#c97c50] underline hover:text-[#b06a41]">
+                    Booking Terms &amp; Conditions
+                  </a>
+                  <span id="tnc-accept-note" className="block text-stone-400">
+                    Required before payment. Opens in a new tab.
+                  </span>
+                </label>
+              </div>
+
+              <button
+                type="button"
+                onClick={handlePayNow}
+                disabled={!tncAccepted || payNowLoading || total <= 0}
+                className="w-full rounded-full bg-[#003087] py-3 text-sm font-medium text-white hover:bg-[#002266] transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-1.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-stone-500"
+              >
+                {payNowLoading ? (
+                  <><span className="w-3.5 h-3.5 border border-white/40 border-t-white rounded-full animate-spin" /> Processing…</>
+                ) : (
+                  <>Pay {fmt(total)} with PayPal</>
+                )}
+              </button>
+
+              {/* PayPal handoff expectation copy */}
+              <p className="text-xs text-stone-500 text-center leading-5">
+                You&apos;ll be redirected to our secure PayPal gateway to review and complete your payment.
+                Your card or PayPal details are entered on PayPal&apos;s site — never on ours.
+              </p>
+
+              <button type="button" onClick={() => setStep("enquiry")} className="w-full text-xs text-stone-400 underline hover:text-stone-700">
+                ← Back to your details
+              </button>
+            </div>
           )}
         </>
       )}
