@@ -7,7 +7,7 @@ export default function BookingTermsPage() {
         <p className="text-sm leading-7 text-stone-600">
           These Booking Terms and Conditions govern all bookings made through the La Maison Homes website (<strong>lamaisonhomes.com.au</strong>) and any direct booking channel. By submitting a booking enquiry or completing a payment, you agree to be bound by these terms.
         </p>
-        <p className="text-sm text-stone-500">Last updated: June 2025</p>
+        <p className="text-sm text-stone-500">Last updated: November 2026</p>
       </div>
 
       <div className="mt-12 space-y-10 text-sm leading-7 text-stone-600">
@@ -28,14 +28,28 @@ export default function BookingTermsPage() {
 
         <section>
           <h2 className="font-serif text-2xl text-stone-950">3. Cancellation policy</h2>
-          <p className="mt-4">Cancellations must be submitted in writing to La Maison Homes by email. The following refund schedule applies based on the number of days before your scheduled check-in date:</p>
+          <p className="mt-4">Cancellations must be submitted in writing to La Maison Homes by email at <a href="mailto:stay@lamaisonhomes.com.au" className="underline">stay@lamaisonhomes.com.au</a>. Your cancellation takes effect at the time we receive it.</p>
+          <h3 className="mt-6 font-serif text-xl text-stone-900">3.1 How cancellation timing is measured</h3>
+          <p className="mt-3">All cancellation periods are measured in Melbourne, Australia local time (AEDT/AEST as applicable), from 12:00 am (midnight, start of day) of your scheduled check-in date, to the moment we receive your cancellation notice.</p>
+          <h3 className="mt-6 font-serif text-xl text-stone-900">3.2 Refund schedule</h3>
           <ul className="mt-4 space-y-3 list-disc list-outside pl-5">
-            <li><strong className="text-stone-800">14 or more days before check-in:</strong> Full refund of all amounts paid, excluding any non-refundable booking service fees.</li>
-            <li><strong className="text-stone-800">7 to 13 days before check-in:</strong> 50% refund of the total booking value. The remaining 50% is forfeited.</li>
-            <li><strong className="text-stone-800">Less than 7 days before check-in:</strong> No refund. The full booking value is forfeited.</li>
+            <li><strong className="text-stone-800">30 days or more before check-in:</strong> 100% refund of all amounts paid.</li>
+            <li><strong className="text-stone-800">14 to 29 days before check-in:</strong> 50% refund of all amounts paid. The remaining 50% is forfeited.</li>
+            <li><strong className="text-stone-800">Fewer than 14 days before check-in:</strong> No refund. The full booking value is forfeited.</li>
           </ul>
-          <p className="mt-4">Refunds are processed to the original payment method within 5 to 10 business days. La Maison Homes is not responsible for delays caused by the payment processor.</p>
-          <p className="mt-3">We strongly recommend that guests take out travel insurance that includes coverage for accommodation cancellation.</p>
+          <h3 className="mt-6 font-serif text-xl text-stone-900">3.3 What is refunded</h3>
+          <p className="mt-3">Your refund is calculated on the total you paid through our website. The accommodation charge and the cleaning fee are refunded <strong className="text-stone-800">in the same proportion</strong> &mdash; where a 50% refund applies, 50% of both the accommodation charge and the cleaning fee is refunded.</p>
+          <h3 className="mt-6 font-serif text-xl text-stone-900">3.4 Refund method and timeline</h3>
+          <p className="mt-3">Refunds are issued to your <strong className="text-stone-800">original PayPal payment method only</strong>. We will initiate your refund within 5 business days of your cancellation taking effect; PayPal typically posts refunds to your account within a further 3 to 5 business days. PayPal&apos;s processing times are outside our control.</p>
+          <h3 className="mt-6 font-serif text-xl text-stone-900">3.5 Processing fees</h3>
+          <p className="mt-3">Where PayPal does not return its transaction processing fee to us on a refund, we absorb that cost &mdash; it is not deducted from your refund amount.</p>
+          <h3 className="mt-6 font-serif text-xl text-stone-900">3.6 No-shows</h3>
+          <p className="mt-3">If you do not arrive on your check-in date and have not contacted us to cancel or amend, the booking is treated as a cancellation with fewer than 14 days&apos; notice &mdash; no refund is payable.</p>
+          <h3 className="mt-6 font-serif text-xl text-stone-900">3.7 Early departures</h3>
+          <p className="mt-3">Unused nights after an early departure are non-refundable. Where the property&apos;s availability allows, we will gladly assist with re-booking or date changes &mdash; contact us as early as possible.</p>
+          <h3 className="mt-6 font-serif text-xl text-stone-900">3.8 Cancellation by us</h3>
+          <p className="mt-3">If we must cancel your booking for reasons within our control, you will receive a full 100% refund of all amounts paid, regardless of the notice period.</p>
+          <p className="mt-4">We strongly recommend that guests take out travel insurance that includes coverage for accommodation cancellation.</p>
         </section>
 
         <section>

@@ -38,8 +38,17 @@ function formatDate(iso: string | null): string {
 function formatCurrency(n: number | null): string {
   if (!n) return '—'
   return new Intl.NumberFormat('en-AU', {
-    style: 'currency', currency: 'AUD', maximumFractionDigits: 0,
+    style: 'currency', currency: 'AUD', minimumFractionDigits: Number.isInteger(n) ? 0 : 2, maximumFractionDigits: 2,
   }).format(n)
+}
+
+function formatDateTime(iso: string | null | undefined): string {
+  if (!iso) return '—'
+  try {
+    return new Date(iso).toLocaleString('en-AU', {
+      dateStyle: 'medium', timeStyle: 'short', timeZone: 'Australia/Melbourne',
+    }) + ' AEDT/AEST (Melbourne)'
+  } catch { return iso }
 }
 
 async function sendPaymentConfirmationEmail(opts: {
@@ -51,6 +60,11 @@ async function sendPaymentConfirmationEmail(opts: {
   checkOut: string | null
   nights: number | null
   total: number | null
+  nightlyRate: number | null
+  cleaningFee: number | null
+  guests: number | null
+  tncVersion: string | null
+  tncAcceptedAt: string | null
   portalToken: string
   captureId: string | null
 }): Promise<void> {
@@ -83,6 +97,39 @@ async function sendPaymentConfirmationEmail(opts: {
             <td style="padding:6px 0;color:#14532d;font-size:13px;">${formatDate(opts.checkIn)}</td></tr>
         <tr><td style="padding:6px 0;color:#166534;font-size:13px;">Check-out</td>
             <td style="padding:6px 0;color:#14532d;font-size:13px;">${formatDate(opts.checkOut)}</td></tr>
+        ${opts.guests ? `<tr><td style="padding:6px 0;color:#166534;font-size:13px;">Guests</td>
+            <td style="padding:6px 0;color:#14532d;font-size:13px;">${opts.guests}</td></tr>` : ''}
+      </table>
+    </div>
+
+    <div style="background:#faf8f4;border:1px solid #e8e0d6;border-radius:8px;padding:20px;margin:0 0 24px;">
+      <p style="color:#1a1a1a;font-size:12px;font-weight:bold;letter-spacing:1px;text-transform:uppercase;margin:0 0 12px;">Price breakdown</p>
+      <table style="width:100%;border-collapse:collapse;">
+        ${opts.nightlyRate != null && opts.nights ? `<tr><td style="padding:4px 0;color:#5a5a5a;font-size:13px;width:40%;">${formatCurrency(opts.nightlyRate)} × ${opts.nights} night${opts.nights === 1 ? '' : 's'}</td>
+            <td style="padding:4px 0;color:#1a1a1a;font-size:13px;">${formatCurrency(opts.nightlyRate * opts.nights)}</td></tr>` : ''}
+        ${opts.cleaningFee ? `<tr><td style="padding:4px 0;color:#5a5a5a;font-size:13px;">Cleaning fee</td>
+            <td style="padding:4px 0;color:#1a1a1a;font-size:13px;">${formatCurrency(opts.cleaningFee)}</td></tr>` : ''}
+        <tr><td style="padding:6px 0 0;color:#1a1a1a;font-size:13px;font-weight:bold;">Total charged</td>
+            <td style="padding:6px 0 0;color:#1a1a1a;font-size:13px;font-weight:bold;">${formatCurrency(opts.total)} AUD</td></tr>
+      </table>
+    </div>
+
+    <div style="background:#fff;border:1px solid #e8e0d6;border-radius:8px;padding:20px;margin:0 0 24px;">
+      <p style="color:#1a1a1a;font-size:12px;font-weight:bold;letter-spacing:1px;text-transform:uppercase;margin:0 0 12px;">Cancellation policy (summary)</p>
+      <table style="width:100%;border-collapse:collapse;font-size:13px;color:#5a5a5a;">
+        <tr><td style="padding:4px 0;">30+ days before check-in</td><td style="padding:4px 0;text-align:right;">100% refund</td></tr>
+        <tr><td style="padding:4px 0;">14–29 days before check-in</td><td style="padding:4px 0;text-align:right;">50% refund</td></tr>
+        <tr><td style="padding:4px 0;">Under 14 days</td><td style="padding:4px 0;text-align:right;">Non-refundable</td></tr>
+      </table>
+      <p style="color:#5a5a5a;font-size:12px;line-height:1.6;margin:12px 0 0;">
+        Refunds are issued to your original PayPal payment method. Accommodation and cleaning fee are refunded in the same proportion.
+        <a href="https://www.lamaisonhomes.com.au/booking-terms" style="color:#c9a96e;">Full terms →</a>
+      </p>
+    </div>
+
+    ${opts.tncVersion ? `<p style="color:#aaa;font-size:11px;line-height:1.6;margin:0 0 24px;">
+      You accepted our Booking Terms &amp; Conditions (version ${opts.tncVersion})${opts.tncAcceptedAt ? ` on ${formatDateTime(opts.tncAcceptedAt)}` : ''}.
+    </p>` : ''}
         ${opts.nights ? `<tr><td style="padding:6px 0;color:#166534;font-size:13px;">Nights</td>
             <td style="padding:6px 0;color:#14532d;font-size:13px;">${opts.nights}</td></tr>` : ''}
         ${opts.total ? `<tr><td style="padding:6px 0;color:#166534;font-size:13px;">Amount paid</td>
@@ -427,6 +474,11 @@ export async function POST(req: NextRequest) {
       checkIn: lead.check_in,
       checkOut: lead.check_out,
       nights: lead.nights,
+      nightlyRate: lead.nightly_rate ?? null,
+      cleaningFee: lead.cleaning_fee ?? null,
+      guests: lead.num_guests ?? null,
+      tncVersion: lead.tnc_version ?? null,
+      tncAcceptedAt: lead.tnc_accepted_at ?? null,
       total: captureResult.amount ?? lead.total_amount,
       portalToken,
       captureId: captureResult.captureId,
