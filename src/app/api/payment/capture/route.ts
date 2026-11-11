@@ -16,6 +16,7 @@ import { capturePayPalOrder, verifyPayPalOrder } from '@/lib/paypal'
 import { createHostawayReservation } from '@/lib/hostaway-reservations'
 import { paymentMethodLabel, paypalEnvironment } from '@/lib/payment-details'
 import { assertHostawayBookable, BookabilityError } from '@/lib/hostaway-bookability'
+import { claimableFilter, decideLostClaim } from '@/lib/capture-claim'
 
 export const dynamic = 'force-dynamic'
 
@@ -184,11 +185,16 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: true, reference: lead.reference, captureId: lead.paypal_capture_id, hostawayReservationId: lead.hostaway_reservation_id, alreadyPaid: true })
     }
 
-    // RACE GUARD (T012): atomically claim the unpaid→paid transition BEFORE
-    // charging PayPal. Exactly one concurrent request (capture vs webhook) can
-    // win; losers must not charge, re-book, or re-email.
+    // RACE GUARD (T012, P1 fix): atomically claim the pre-payment→processing
+    // transition BEFORE charging PayPal. Exactly one concurrent request
+    // (capture vs webhook) can win; losers must not charge, re-book, or
+    // re-email. Claimable set is unpaid|pending|payment_failed (P1 root cause:
+    // 'pending' rows — written by create-order — were never claimable, which
+    // dead-ended every success-page visit into a permanent 409).
+    // Idempotency guard: 'paid'/'processing' (fresh) are NOT in the filter set,
+    // so a failed-retry claim can never clobber a paid or actively-processing row.
     const claimRes = await fetch(
-      `${SUPABASE_URL}/rest/v1/leads?id=eq.${encodeURIComponent(lead.id)}&payment_status=eq.unpaid`,
+      `${SUPABASE_URL}/rest/v1/leads?id=eq.${encodeURIComponent(lead.id)}&payment_status=in.${claimableFilter()}`,
       {
         method: 'PATCH',
         headers: {
@@ -201,6 +207,9 @@ export async function POST(req: NextRequest) {
           // Processing claim — payment_status stays 'processing' until capture
           // completes; the webhook safety net can still take over from here.
           payment_status: 'processing',
+          // Lease timestamp: staleness detection (see capture-claim.ts). Cleared
+          // implicitly by the paid transition; stale leases are re-claimable.
+          processing_claimed_at: new Date().toISOString(),
         }),
       }
     )
@@ -210,16 +219,57 @@ export async function POST(req: NextRequest) {
     }
     const claimed = await claimRes.json()
     if (!Array.isArray(claimed) || claimed.length === 0) {
-      // Someone else claimed it between our read and the claim PATCH.
+      // Lost the claim race. Reread the lead (P1 fix) and decide precisely:
+      // paid → render success; stale lease → reclaim; fresh lease → retry.
       console.warn('[capture] Lost processing race for lead', lead.id)
-      return NextResponse.json({ success: false, paymentCaptured: false, retryShortly: true, error: 'Booking is being processed — please wait a moment and refresh.' }, { status: 409 })
+      const rereadRes = await fetch(
+        `${SUPABASE_URL}/rest/v1/leads?id=eq.${encodeURIComponent(lead.id)}&select=payment_status,processing_claimed_at,hostaway_reservation_id,paypal_capture_id,reference`,
+        { headers: { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}` }, cache: 'no-store' }
+      )
+      if (!rereadRes.ok) {
+        return NextResponse.json({ success: false, paymentCaptured: false, retryShortly: true, state: 'verifying', error: 'We are confirming your payment — please refresh in a moment.' }, { status: 409 })
+      }
+      const reread = (await rereadRes.json()) as Array<Record<string, unknown>>
+      const after = reread?.[0]
+      if (!after) {
+        return NextResponse.json({ error: 'Lead not found after claim race' }, { status: 404 })
+      }
+      const action = decideLostClaim({ payment_status: String(after.payment_status), processing_claimed_at: (after.processing_claimed_at as string | null) ?? null })
+      if (action.kind === 'render-success') {
+        return NextResponse.json({ success: true, reference: after.reference ?? lead.reference, captureId: after.paypal_capture_id ?? null, hostawayReservationId: after.hostaway_reservation_id ?? null, alreadyPaid: true })
+      }
+      if (action.kind === 'reclaim') {
+        // Stale lease (or a claimable state re-observed): attempt one re-claim.
+        // The claim PATCH remains state-filtered, so this can never clobber a
+        // paid row that raced in between, and can only take 'processing' when
+        // the previous holder wrote a stale lease (we also re-filter on it).
+        const reclaimRes = await fetch(
+          `${SUPABASE_URL}/rest/v1/leads?id=eq.${encodeURIComponent(lead.id)}&payment_status=in.${claimableFilter()}`,
+          {
+            method: 'PATCH',
+            headers: { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}`, 'Content-Type': 'application/json', Prefer: 'return=representation' },
+            body: JSON.stringify({ payment_status: 'processing', processing_claimed_at: new Date().toISOString() }),
+          }
+        )
+        const reclaimed = reclaimRes.ok ? await reclaimRes.json() : []
+        if (Array.isArray(reclaimed) && reclaimed.length > 0) {
+          // Re-claimed under this request — fall through to normal capture below
+          // using the existing lead object (still valid: not paid).
+        } else {
+          // Someone else won the re-claim — genuine concurrent processing now.
+          return NextResponse.json({ success: false, paymentCaptured: false, retryShortly: true, state: 'retry_shortly', error: 'Booking is being processed — please wait a moment and refresh.' }, { status: 409 })
+        }
+      } else {
+        // Fresh, active lease held by another handler (capture or webhook).
+        return NextResponse.json({ success: false, paymentCaptured: false, retryShortly: true, state: 'retry_shortly', error: 'Booking is being processed — please wait a moment and refresh.' }, { status: 409 })
+      }
     }
     // NOTE on claim lifecycle: if this request fails after claiming (capture
-    // error, DB error, Hostaway failure), payment_status remains 'processing'.
-    // The PayPal webhook safety net can complete the paid transition from a
-    // 'processing' state, and an operator can reset 'processing' → 'unpaid'
-    // after verifying no funds moved. A stuck 'processing' lead must NEVER be
-    // auto-retried into a second capture without a webhook event or operator.
+    // error, DB error, Hostaway failure), payment_status remains 'processing'
+    // with a lease timestamp. The PayPal webhook safety net can complete the
+    // paid transition from 'processing', and any capture attempt after
+    // LEASE_STALE_AFTER_MS (5 min) may re-claim safely (filters prevent
+    // double-charge against a paid row).
 
     // Verify the PayPal order ID matches what we stored (prevents order swapping).
     // If no orderId in URL, fall back to the stored paypal_order_id on the lead.
