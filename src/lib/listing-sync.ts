@@ -105,13 +105,37 @@ export function mapAmenities(
     .filter(Boolean);
 }
 
-/** Suburb from publicAddress/city — same heuristic the site already uses. */
+/** Suburb from publicAddress/city — same heuristic the site already uses.
+ *
+ * T016 fix (2026-11-11): Hostaway publicAddress now appends trailing
+ * country + postcode segments (e.g. "…, Box Hill, Victoria, Australia, 3128").
+ * Taking the raw last segment returned "3128" instead of "Box Hill", so we
+ * skip trailing pure-numeric (postcodes) and country-name segments before
+ * selecting the last remaining segment. */
+const TRAILING_NON_SUBURB = new Set([
+  "australia",
+  "au",
+  "victoria",
+  "vic",
+  "australia (au)",
+  "澳大利亚",
+]);
+
 export function pickSuburb(l: HostawayListing): string | null {
   const raw = l.publicAddress || l.address || "";
   if (!raw) return l.city ?? null;
   const parts = raw.split(",").map((s) => s.trim()).filter(Boolean);
   // Prefer the 2nd segment ("25 Osullivan Road, Glen Waverley") else city.
-  return parts.length >= 2 ? parts[parts.length - 1] : l.city ?? null;
+  // Strip trailing postcode / country / state segments first.
+  const isNonSuburb = (s: string) =>
+    /^\d{3,5}$/.test(s) || TRAILING_NON_SUBURB.has(s.toLowerCase());
+  while (parts.length > 2 && isNonSuburb(parts[parts.length - 1])) {
+    parts.pop();
+  }
+  if (parts.length >= 2) {
+    return parts[parts.length - 1];
+  }
+  return l.city ?? null;
 }
 
 /** Map a Hostaway listing to a Supabase properties INSERT payload. */
