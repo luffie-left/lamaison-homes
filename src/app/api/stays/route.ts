@@ -98,7 +98,9 @@ async function getFromSupabase(): Promise<Property[] | null> {
 
   try {
     const res = await fetch(
-      `${SUPABASE_URL}/rest/v1/properties?is_published=eq.true&is_active=eq.true&order=name`,
+      // tier=test rows (owner-authorized temporary test listings) are
+      // direct-link only — excluded from the browse grid.
+      `${SUPABASE_URL}/rest/v1/properties?is_published=eq.true&is_active=eq.true&tier=neq.test&order=name`,
       {
         headers: {
           apikey: SERVICE_KEY,
