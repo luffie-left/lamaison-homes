@@ -94,6 +94,11 @@ export function BookingWidget({
   const minStayNotMet =
     effectiveMinStay !== null && nights > 0 && nights < effectiveMinStay;
 
+  // >28-night gate (terms v2): online booking capped at 28 nights until
+  // rolling block-payment automation ships. Server (quote API) is authoritative.
+  const MAX_ONLINE_NIGHTS = 28;
+  const overMaxNights = nights > MAX_ONLINE_NIGHTS;
+
   // A3: full E.164 number ready to submit?
   const phoneValid = phone !== null && isValidE164(phone);
   const phoneError =
@@ -621,11 +626,23 @@ export function BookingWidget({
           </p>
         )}
 
+        {/* >28-night gate: long stays go via contact until block payments exist */}
+        {overMaxNights && (
+          <div className="rounded-xl bg-amber-50 px-3 py-3 text-sm text-amber-800 space-y-1">
+            <p className="font-semibold">Staying longer than 28 nights?</p>
+            <p>
+              Online booking supports stays of up to 28 nights. For longer stays,{" "}
+              <a href="/contact" className="underline font-medium">contact us</a> and our team will arrange a tailored
+              long-stay rate and payment schedule.
+            </p>
+          </div>
+        )}
+
         {step === "quote" ? (
           <button
             type="button"
             onClick={handleReserveClick}
-            disabled={minStayNotMet}
+            disabled={minStayNotMet || overMaxNights}
             className="w-full rounded-xl bg-stone-950 px-5 py-3 text-sm font-semibold text-white hover:bg-stone-800 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
           >
             Reserve — pay via PayPal

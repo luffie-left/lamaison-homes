@@ -38,6 +38,20 @@ export async function GET(req: NextRequest) {
     const end = new Date(`${checkOut}T00:00:00Z`);
     const nights = Math.round((end.getTime() - start.getTime()) / 86400000);
 
+    // >28-night gate (terms v2): authoritative server-side cap. Online
+    // booking limited to 28 nights until rolling block-payment automation
+    // ships. Long stays are handled via contact/lead flow.
+    const MAX_ONLINE_NIGHTS = 28;
+    if (nights > MAX_ONLINE_NIGHTS) {
+      return NextResponse.json(
+        {
+          error: "Online booking supports stays of up to 28 nights. For longer stays, please contact us and our team will arrange a tailored long-stay rate and payment schedule.",
+          code: "MAX_NIGHTS_EXCEEDED",
+        },
+        { status: 400 }
+      );
+    }
+
     const nightlyRate = listing.price ?? 0;
     const cleaningFee = listing.cleaningFee ?? 0;
     const minStay = listing.minimumStay ?? 1;

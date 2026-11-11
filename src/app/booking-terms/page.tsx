@@ -21,9 +21,11 @@ export default function BookingTermsPage() {
 
         <section>
           <h2 className="font-serif text-2xl text-stone-950">2. Payment terms</h2>
-          <p className="mt-4">Bookings of fewer than 14 days are charged in full at the time of confirmation. For extended stays, a deposit equal to 50% of the total booking value is required to secure the reservation, with the balance due 14 days before check-in.</p>
-          <p className="mt-3">If the balance is not received by the due date, La Maison Homes reserves the right to cancel the booking and apply the cancellation policy set out in these terms.</p>
+          <p className="mt-4">Stays of 28 nights or fewer are charged in full at the time of booking.</p>
+          <p className="mt-3">Stays longer than 28 nights are charged in rolling 28-night blocks: the first 28 nights are charged in full at the time of booking, and each subsequent block of nights is charged no later than 14 days before the end of the prior block. For example, on a 40-night stay, nights 1&ndash;28 are charged at booking and nights 29&ndash;40 are due no later than 14 days before the end of night 28; on a 70-night stay, nights 29&ndash;56 are likewise due no later than 14 days before the end of night 28, and nights 57&ndash;70 no later than 14 days before the end of night 56.</p>
+          <p className="mt-3">If a block payment is not received by its due date, La Maison Homes reserves the right to cancel the remaining nights of the booking and apply the cancellation policy in section 3 to the affected nights.</p>
           <p className="mt-3">All amounts are quoted and charged in Australian Dollars (AUD) inclusive of any applicable taxes and fees. Payments are processed through our secure PayPal-powered gateway.</p>
+          <p className="mt-3">Please note: bookings made through this website are limited to stays of up to 28 nights. Longer stays are arranged through our team with a tailored rate and payment schedule &mdash; <a href="/contact" className="underline">contact us</a> to discuss an extended stay.</p>
         </section>
 
         <section>
@@ -38,7 +40,7 @@ export default function BookingTermsPage() {
             <li><strong className="text-stone-800">Fewer than 14 days before check-in:</strong> No refund. The full booking value is forfeited.</li>
           </ul>
           <h3 className="mt-6 font-serif text-xl text-stone-900">3.3 What is refunded</h3>
-          <p className="mt-3">Your refund is calculated on the total you paid through our website. The accommodation charge and the cleaning fee are refunded <strong className="text-stone-800">in the same proportion</strong> &mdash; where a 50% refund applies, 50% of both the accommodation charge and the cleaning fee is refunded.</p>
+          <p className="mt-3">Your refund is calculated on the total you paid through our website. The <strong className="text-stone-800">cleaning fee is refunded in full (100%) whenever any refund of accommodation is payable, including no-shows</strong> &mdash; it is charged only for stays that actually commence. Where a 50% accommodation refund applies, 50% of the accommodation charge and 100% of the cleaning fee is refunded.</p>
           <h3 className="mt-6 font-serif text-xl text-stone-900">3.4 Refund method and timeline</h3>
           <p className="mt-3">Refunds are issued to your <strong className="text-stone-800">original PayPal payment method only</strong>. We will initiate your refund within 5 business days of your cancellation taking effect; PayPal typically posts refunds to your account within a further 3 to 5 business days. PayPal&apos;s processing times are outside our control.</p>
           <h3 className="mt-6 font-serif text-xl text-stone-900">3.5 Processing fees</h3>
@@ -75,9 +77,16 @@ export default function BookingTermsPage() {
 
         <section>
           <h2 className="font-serif text-2xl text-stone-950">7. Security deposit</h2>
-          <p className="mt-4">Certain properties require a security deposit at the time of booking or check-in. Where applicable, the deposit amount will be stated on the property listing and in your booking confirmation.</p>
-          <p className="mt-3">The security deposit will be released within 5 business days of check-out, subject to a satisfactory inspection of the property. Any amounts deducted for damage, additional cleaning, or breach of house rules will be itemised and notified to the guest.</p>
+          <p className="mt-4">Unless otherwise specified on the property listing, a refundable security deposit is taken at or around the time of booking, separately from your booking payment. The deposit amount applicable to your property is shown on the listing page and in your booking confirmation.</p>
+          <p className="mt-3">Where your payment method supports it, the deposit is taken as a temporary authorisation hold on your card via PayPal; otherwise it is charged to your PayPal account and refunded in full after check-out. In either case, no part of the deposit is retained unless required under this section.</p>
+          <p className="mt-3">The deposit is refunded in full within 5 business days of check-out, subject to a satisfactory inspection of the property. Any amounts deducted for damage, additional cleaning, or breach of house rules will be itemised and notified to the guest.</p>
           <p className="mt-3">Where damage costs exceed the security deposit, La Maison Homes reserves the right to pursue the additional amount.</p>
+        </section>
+
+        <section>
+          <h2 className="font-serif text-2xl text-stone-950">7A. Owners-corporation and building rules</h2>
+          <p className="mt-4">Guests must comply with all owners-corporation by-laws, building rules, and regulations applicable to the property during their stay, including those relating to noise, common areas, waste disposal, parking, and access. Where a property is subject to particular building rules (for example, registration of guests at reception or restrictions on balcony use), these will be advised at the time of booking or before check-in.</p>
+          <p className="mt-3">Breach of building rules that results in fines, notices, or remediation costs being issued against the property or its owner may be charged to the guest. This clause supplements, and does not replace, the House Rules incorporated under section 6.</p>
         </section>
 
         <section>
